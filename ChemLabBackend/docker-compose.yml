@@ -1,0 +1,50 @@
+// docker-compose.yml
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: chemlab-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong!Passw0rd
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - chemlab-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: chemlab-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - chemlab-network
+    command: redis-server --appendonly yes
+
+  mongodb:
+    image: mongo:7-jammy
+    container_name: chemlab-mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin123
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - chemlab-network
+
+volumes:
+  sqlserver-data:
+  redis-data:
+  mongodb-data:
+
+networks:
+  chemlab-network:
+    driver: bridge

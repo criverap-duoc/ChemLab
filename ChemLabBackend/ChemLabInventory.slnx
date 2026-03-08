@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ChemLab.API/ChemLab.API.csproj" />
+    <Project Path="src/ChemLab.Application/ChemLab.Application.csproj" />
+    <Project Path="src/ChemLab.Domain/ChemLab.Domain.csproj" />
+    <Project Path="src/ChemLab.Infrastructure/ChemLab.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ChemLab.API.IntegrationTests/ChemLab.API.IntegrationTests.csproj" />
+    <Project Path="tests/ChemLab.Application.UnitTests/ChemLab.Application.UnitTests.csproj" />
+  </Folder>
+</Solution>

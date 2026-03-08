@@ -1,0 +1,25 @@
+# .NET
+bin/
+obj/
+appsettings.Production.json
+*.user
+*.suo
+*.db
+*.db-shm
+*.db-wal
+
+# VS Code
+.vscode/
+.history/
+
+# Logs
+Logs/
+*.log
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+
+# User-specific files
+*.user

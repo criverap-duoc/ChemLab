@@ -68,6 +68,11 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
+
 var app = builder.Build();
 
 // Configure pipeline
@@ -101,5 +106,7 @@ app.MapAuthEndpoints();
 app.MapReagentsEndpoints();
 app.MapEquipmentEndpoints();
 app.MapSetupEndpoints();
+app.MapExperimentEndpoints();
+
 
 app.Run();

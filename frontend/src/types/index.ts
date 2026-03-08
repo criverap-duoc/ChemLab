@@ -38,7 +38,6 @@ export const PERMISSIONS = {
   EDIT_EXPERIMENT: 'edit:experiment',
   DELETE_EXPERIMENT: 'delete:experiment',
   VIEW_EXPERIMENT: 'view:experiment',
-
   // Users
   MANAGE_USERS: 'manage:users',
   VIEW_USERS: 'view:users',

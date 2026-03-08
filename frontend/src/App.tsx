@@ -13,6 +13,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { getTheme, ThemeContext } from './theme';
 import { PERMISSIONS } from './types';
 import { RoleTester } from './components/debug/RoleTester';
+import { ExperimentList } from './components/experiments/ExperimentList';
+
 
 const queryClient = new QueryClient();
 
@@ -95,6 +97,16 @@ function App() {
                   <ProtectedRoute>
                     <MainLayout>
                       <RoleTester />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/experiments"
+                element={
+                  <ProtectedRoute requiredPermissions={[PERMISSIONS.VIEW_EXPERIMENT]}>
+                    <MainLayout>
+                      <ExperimentList />
                     </MainLayout>
                   </ProtectedRoute>
                 }

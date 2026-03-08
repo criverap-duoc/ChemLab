@@ -59,6 +59,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     { text: 'Reactivos', icon: <ScienceIcon />, path: '/reagents' },
     { text: 'Equipos', icon: <BiotechIcon />, path: '/equipment' },
+    { text: 'Experimentos', icon: <ScienceIcon />, path: '/experiments' },
   ];
 
   const drawer = (

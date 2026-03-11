@@ -26,6 +26,7 @@ export const reagentService = {
   },
 
   async update(id: string, data: Partial<CreateReagentDto>): Promise<void> {
+    console.log('📤 Service - update payload:', JSON.stringify(data, null, 2));
     await api.put(`/reagents/${id}`, data);
   },
 

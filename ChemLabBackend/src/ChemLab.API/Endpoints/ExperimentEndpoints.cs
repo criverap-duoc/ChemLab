@@ -1,9 +1,11 @@
+// ChemLabBackend\src\ChemLab.API\Endpoints\ExperimentEndpoints.cs
 using ChemLab.Domain.Entities;
+using ChemLab.Domain.Enums;
 using ChemLab.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using ChemLab.Domain.Enums;
+using ChemLab.API.Services;
 
 namespace ChemLab.API.Endpoints;
 
@@ -20,29 +22,20 @@ public static class ExperimentEndpoints
         group.MapDelete("/{id:guid}", DeleteExperiment);
         group.MapPost("/{id:guid}/reagents", AddReagent);
         group.MapPost("/{id:guid}/equipment", AddEquipment);
-        group.MapPatch("/{id:guid}/status", async (Guid id, [FromBody] UpdateStatusDto dto, ApplicationDbContext context) =>
-        {
-            var experiment = await context.Experiments.FindAsync(id);
-            if (experiment is null || !experiment.IsActive)
-                return Results.NotFound();
-
-            experiment.Status = dto.Status;
-            experiment.UpdatedAt = DateTime.UtcNow;
-
-            if (dto.Status == ExperimentStatus.Completed && !experiment.EndDate.HasValue)
-                experiment.EndDate = DateTime.UtcNow;
-
-            await context.SaveChangesAsync();
-            return Results.Ok(new { Message = "Status updated successfully" });
-        });
+        group.MapPatch("/{id:guid}/status", UpdateStatus);
     }
 
     private static async Task<IResult> GetAllExperiments(
         ApplicationDbContext context,
+        HttpContext httpContext,  // <-- AGREGAR
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] ExperimentStatus? status = null)
     {
+        var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
+            return Results.Unauthorized();
+
         var query = context.Experiments
             .Include(e => e.CreatedBy)
             .Include(e => e.Reagents)
@@ -50,6 +43,7 @@ public static class ExperimentEndpoints
             .Include(e => e.Equipment)
                 .ThenInclude(eq => eq.Equipment)
             .Where(e => e.IsActive)
+            .Where(e => e.CreatedById == userId)  // <-- FILTRAR POR USUARIO
             .AsQueryable();
 
         if (status.HasValue)
@@ -105,7 +99,7 @@ public static class ExperimentEndpoints
             experiment.Id,
             experiment.Name,
             experiment.Description,
-            experiment.Status,
+            Status = experiment.Status.ToString(),
             experiment.StartDate,
             experiment.EndDate,
             experiment.Protocol,
@@ -133,34 +127,11 @@ public static class ExperimentEndpoints
         });
     }
 
-    public static async Task<IResult> CreateExperiment(
+    private static async Task<IResult> CreateExperiment(
         [FromBody] CreateExperimentDto dto,
         ApplicationDbContext context,
         IHttpContextAccessor httpContextAccessor)
     {
-        var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(userIdClaim, out var userId))
-            return Results.Unauthorized();
-
-        var experiment = new Experiment
-        {
-            Id = Guid.NewGuid(),
-            Name = dto.Name,
-            Description = dto.Description,
-            Status = ExperimentStatus.Planned,  // <-- ESTO ES CRÍTICO
-            StartDate = dto.StartDate ?? DateTime.UtcNow,
-            Protocol = dto.Protocol,
-            Notes = dto.Notes,
-            CreatedById = userId,
-            CreatedAt = DateTime.UtcNow,
-            IsActive = true
-        };
-
-        context.Experiments.Add(experiment);
-        await context.SaveChangesAsync();
-
-        return Results.Created($"/api/experiments/{experiment.Id}", new { experiment.Id });
-    }
         var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdClaim, out var userId))
             return Results.Unauthorized();

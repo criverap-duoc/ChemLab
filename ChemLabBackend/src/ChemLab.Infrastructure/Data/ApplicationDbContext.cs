@@ -20,6 +20,9 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
     public DbSet<Experiment> Experiments { get; set; }
     public DbSet<ExperimentReagent> ExperimentReagents { get; set; }
     public DbSet<ExperimentEquipment> ExperimentEquipment { get; set; }
+    public DbSet<Request> Requests { get; set; }
+    public DbSet<RequestItem> RequestItems { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -95,36 +98,89 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            builder.Entity<ExperimentReagent>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.QuantityUsed).HasPrecision(18, 4);
+        builder.Entity<ExperimentReagent>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.QuantityUsed).HasPrecision(18, 4);
 
-                entity.HasOne(e => e.Experiment)
-                    .WithMany(e => e.Reagents)
-                    .HasForeignKey(e => e.ExperimentId)
-                    .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Experiment)
+                .WithMany(e => e.Reagents)
+                .HasForeignKey(e => e.ExperimentId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasOne(e => e.Reagent)
-                    .WithMany()
-                    .HasForeignKey(e => e.ReagentId)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
+            entity.HasOne(e => e.Reagent)
+                .WithMany()
+                .HasForeignKey(e => e.ReagentId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
 
-            builder.Entity<ExperimentEquipment>(entity =>
-            {
-                entity.HasKey(e => e.Id);
+        builder.Entity<ExperimentEquipment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
 
-                entity.HasOne(e => e.Experiment)
-                    .WithMany(e => e.Equipment)
-                    .HasForeignKey(e => e.ExperimentId)
-                    .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Experiment)
+                .WithMany(e => e.Equipment)
+                .HasForeignKey(e => e.ExperimentId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasOne(e => e.Equipment)
-                    .WithMany()
-                    .HasForeignKey(e => e.EquipmentId)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
+            entity.HasOne(e => e.Equipment)
+                .WithMany()
+                .HasForeignKey(e => e.EquipmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<Request>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.Comments).HasMaxLength(500);
+            entity.Property(e => e.RejectionReason).HasMaxLength(500);
+
+            entity.HasOne(e => e.RequestedBy)
+                .WithMany()
+                .HasForeignKey(e => e.RequestedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.ApprovedBy)
+                .WithMany()
+                .HasForeignKey(e => e.ApprovedById)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<RequestItem>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ItemName).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.CatalogNumber).HasMaxLength(100);
+            entity.Property(e => e.CasNumber).HasMaxLength(50);
+            entity.Property(e => e.Unit).HasMaxLength(20);
+            entity.Property(e => e.Specifications).HasMaxLength(500);
+            entity.Property(e => e.Supplier).HasMaxLength(200);
+            entity.Property(e => e.EstimatedPrice).HasPrecision(18, 2);
+
+            entity.HasOne(e => e.Request)
+                .WithMany(r => r.Items)
+                .HasForeignKey(e => e.RequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Notification>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Message).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.IsRead);
+            entity.HasIndex(e => e.Timestamp);
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
 
     }
 }

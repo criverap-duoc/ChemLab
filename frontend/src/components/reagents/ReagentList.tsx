@@ -147,19 +147,42 @@ export const ReagentList: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (selectedReagent) {
-      await reagentService.update(selectedReagent.id, formData);
-    } else {
-      await reagentService.create(formData);
+    try {
+      if (selectedReagent) {
+        const updateData = {
+          name: formData.name,
+          chemicalFormula: formData.chemicalFormula,
+          casNumber: formData.casNumber || undefined,
+          quantity: Number(formData.quantity),
+          unit: formData.unit,
+          location: formData.location,
+          hazardLevel: Number(formData.hazardLevel),
+          supplier: formData.supplier || undefined,
+          expiryDate: formData.expiryDate || undefined,
+          minQuantity: Number(formData.minQuantity)
+        };
+
+        console.log('📤 Enviando actualización:', JSON.stringify(updateData, null, 2));
+
+        await reagentService.update(selectedReagent.id, updateData);
+      } else {
+        await reagentService.create(formData);
+      }
+      setOpenDialog(false);
+      loadReagents();
+    } catch (error) {
+      console.error('Error saving reagent:', error);
     }
-    setOpenDialog(false);
-    loadReagents();
   };
 
   const handleDelete = async (id: string) => {
     if (window.confirm('¿Estás seguro de eliminar este reactivo?')) {
-      await reagentService.delete(id);
-      loadReagents();
+      try {
+        await reagentService.delete(id);
+        loadReagents();
+      } catch (error) {
+        console.error('Error deleting reagent:', error);
+      }
     }
   };
 
@@ -566,7 +589,7 @@ export const ReagentList: React.FC = () => {
                 fullWidth
                 label="Número CAS"
                 margin="normal"
-                value={formData.casNumber}
+                value={formData.casNumber || ''}
                 onChange={(e) => setFormData({ ...formData, casNumber: e.target.value })}
               />
             </Grid>
@@ -575,7 +598,7 @@ export const ReagentList: React.FC = () => {
                 fullWidth
                 label="Proveedor"
                 margin="normal"
-                value={formData.supplier}
+                value={formData.supplier || ''}
                 onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
               />
             </Grid>
@@ -661,7 +684,7 @@ export const ReagentList: React.FC = () => {
                 type="date"
                 margin="normal"
                 InputLabelProps={{ shrink: true }}
-                value={formData.expiryDate}
+                value={formData.expiryDate || ''}
                 onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
               />
             </Grid>

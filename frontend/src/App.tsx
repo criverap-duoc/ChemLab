@@ -14,6 +14,8 @@ import { getTheme, ThemeContext } from './theme';
 import { PERMISSIONS } from './types';
 import { RoleTester } from './components/debug/RoleTester';
 import { ExperimentList } from './components/experiments/ExperimentList';
+import { ReportsDashboard } from './components/reports/ReportsDashboard';
+import { RequestList } from './components/requests/RequestList';
 
 
 const queryClient = new QueryClient();
@@ -107,6 +109,26 @@ function App() {
                   <ProtectedRoute requiredPermissions={[PERMISSIONS.VIEW_EXPERIMENT]}>
                     <MainLayout>
                       <ExperimentList />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reports"
+                element={
+                  <ProtectedRoute requiredPermissions={[PERMISSIONS.VIEW_REPORTS]}>
+                    <MainLayout>
+                      <ReportsDashboard />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/requests"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <RequestList />
                     </MainLayout>
                   </ProtectedRoute>
                 }

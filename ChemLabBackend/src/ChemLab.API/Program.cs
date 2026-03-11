@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Identity;
 using ChemLab.Domain.Entities;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using ChemLab.API.Services;
+using ChemLab.API.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -73,6 +75,11 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
 
+builder.Services.AddSignalR();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+builder.Services.AddHostedService<NotificationBackgroundService>();
+
 var app = builder.Build();
 
 // Configure pipeline
@@ -101,12 +108,31 @@ app.MapGet("/api/health", () => Results.Ok(new
 }))
 .WithName("HealthCheck");
 
+app.MapGet("/debug/hubs", () =>
+{
+    var endpoints = app.Services.GetRequiredService<EndpointDataSource>().Endpoints;
+    var hubPaths = endpoints
+        .OfType<RouteEndpoint>()
+        .Where(e => e.RoutePattern.RawText?.Contains("hubs") == true)
+        .Select(e => e.RoutePattern.RawText)
+        .ToList();
+
+    return Results.Ok(new {
+        Message = "Hubs registrados",
+        Hubs = hubPaths,
+        TotalEndpoints = endpoints.Count()
+    });
+});
 // Endpoints
 app.MapAuthEndpoints();
 app.MapReagentsEndpoints();
 app.MapEquipmentEndpoints();
 app.MapSetupEndpoints();
 app.MapExperimentEndpoints();
-
+app.MapRequestEndpoints();
+app.MapHub<NotificationHub>("/hubs/notifications");
+app.MapTestEndpoints();
+app.MapDebugEndpoints();
+app.MapNotificationEndpoints();
 
 app.Run();

@@ -3,6 +3,7 @@ using System;
 using ChemLab.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ChemLab.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260310030410_AddRequestSystem")]
+    partial class AddRequestSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.6");
@@ -185,50 +188,6 @@ namespace ChemLab.Infrastructure.Migrations
                     b.HasIndex("ReagentId");
 
                     b.ToTable("ExperimentReagents");
-                });
-
-            modelBuilder.Entity("ChemLab.Domain.Entities.Notification", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Data")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IsRead");
-
-                    b.HasIndex("Timestamp");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.Reagent", b =>
@@ -671,17 +630,6 @@ namespace ChemLab.Infrastructure.Migrations
                     b.Navigation("Experiment");
 
                     b.Navigation("Reagent");
-                });
-
-            modelBuilder.Entity("ChemLab.Domain.Entities.Notification", b =>
-                {
-                    b.HasOne("ChemLab.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.Reagent", b =>

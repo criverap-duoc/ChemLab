@@ -5,6 +5,14 @@ const pubchemApi = axios.create({
   timeout: 10000,
 });
 
+export interface PubChemSearchResult {
+  cid: number;
+  name: string;
+  formula?: string;
+  molecularWeight?: number;
+  iupacName?: string;
+}
+
 export interface PubChemData {
   formula: string;
   molecularWeight: number;
@@ -17,23 +25,27 @@ export interface PubChemData {
   safetyStatements?: string[];
 }
 
-export interface PubChemSearchResult {
-  cid: number;
-  name: string;
-  formula?: string;
-  molecularWeight?: number;
-}
-
 export const pubchemService = {
-  // Buscar por nombre con resultados detallados
+  // Buscar por nombre con mejor manejo de errores
   async searchByName(query: string): Promise<PubChemSearchResult[]> {
     try {
       if (query.length < 3) return [];
 
-      // Primero buscar nombres que coincidan
+      console.log(`Buscando en PubChem: "${query}"`);
+
       const nameResponse = await pubchemApi.get(
         `/compound/name/${encodeURIComponent(query)}/cids/JSON`
-      );
+      ).catch(error => {
+        if (error.response?.status === 404) {
+          console.log(`"${query}" no encontrado exactamente, probando búsqueda por similitud...`);
+          return this.autocompleteSearch(query);
+        }
+        throw error;
+      });
+
+      if (Array.isArray(nameResponse)) {
+        return nameResponse;
+      }
 
       const cids = nameResponse.data?.IdentifierList?.CID;
 
@@ -41,10 +53,8 @@ export const pubchemService = {
         return [];
       }
 
-      // Obtener solo los primeros 5 resultados
       const topCids = cids.slice(0, 5);
 
-      // Obtener nombres y propiedades básicas
       const detailsResponse = await pubchemApi.get(
         `/compound/cid/${topCids.join(',')}/property/IUPACName,MolecularFormula,MolecularWeight/JSON`
       );
@@ -55,8 +65,8 @@ export const pubchemService = {
         cid: prop.CID,
         name: prop.IUPACName || `Compound CID ${prop.CID}`,
         formula: prop.MolecularFormula || '',
-        // Asegurar que molecularWeight sea número
         molecularWeight: prop.MolecularWeight ? parseFloat(prop.MolecularWeight) : undefined,
+        iupacName: prop.IUPACName
       }));
 
     } catch (error) {
@@ -65,21 +75,41 @@ export const pubchemService = {
     }
   },
 
-  // Búsqueda por nombre simple (versión original)
-  async simpleSearchByName(name: string) {
+  // Búsqueda por autocompletado
+  async autocompleteSearch(query: string): Promise<PubChemSearchResult[]> {
     try {
-      const response = await pubchemApi.get(`/compound/name/${encodeURIComponent(name)}/JSON`);
-      return response.data;
+      const response = await axios.get(
+        `https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(query)}/json`
+      );
+
+      const suggestions = response.data?.dictionary_terms?.compound || [];
+
+      if (suggestions.length === 0) return [];
+
+      const topSuggestions = suggestions.slice(0, 3);
+      const results: PubChemSearchResult[] = [];
+
+      for (const suggestion of topSuggestions) {
+        try {
+          const searchResult = await this.searchByName(suggestion);
+          if (searchResult.length > 0) {
+            results.push(searchResult[0]);
+          }
+        } catch (e) {
+          console.log(`No se pudo obtener detalles para "${suggestion}"`);
+        }
+      }
+
+      return results;
     } catch (error) {
-      console.error('Error searching PubChem by name:', error);
-      return null;
+      console.error('Error in autocomplete search:', error);
+      return [];
     }
   },
 
-  // Buscar por CAS (PubChem usa el nombre o CID)
+  // Buscar por CAS
   async searchByCAS(casNumber: string): Promise<PubChemSearchResult[]> {
     try {
-      // PubChem no busca directamente por CAS, usamos el nombre
       const response = await pubchemApi.get(
         `/compound/name/${encodeURIComponent(casNumber)}/cids/JSON`
       );
@@ -100,7 +130,8 @@ export const pubchemService = {
         cid: prop.CID,
         name: prop.IUPACName || `Compound CID ${prop.CID}`,
         formula: prop.MolecularFormula,
-        molecularWeight: prop.MolecularWeight,
+        molecularWeight: prop.MolecularWeight ? parseFloat(prop.MolecularWeight) : undefined,
+        iupacName: prop.IUPACName
       }];
 
     } catch (error) {
@@ -112,15 +143,11 @@ export const pubchemService = {
   // Obtener detalles completos por CID
   async getCompoundDetails(cid: number): Promise<PubChemData | null> {
     try {
-      // Propiedades básicas
       const propsResponse = await pubchemApi.get(
         `/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,IUPACName,InChI,InChIKey,CanonicalSMILES/JSON`
       );
 
       const properties = propsResponse.data?.PropertyTable?.Properties?.[0];
-
-      // Descripción de seguridad (simulada basada en estructura)
-      // En un proyecto real, podrías mapear esto con datos reales
 
       return {
         formula: properties?.MolecularFormula || '',
@@ -136,42 +163,40 @@ export const pubchemService = {
     }
   },
 
-  // Obtener pictogramas GHS (simulados por ahora)
+  // Obtener pictogramas GHS (simulados)
   async getGHSPictograms(casNumber: string): Promise<string[]> {
-    // En producción, esto vendría de una API real
-    // Por ahora, simulamos basado en el CAS
     const lastDigit = parseInt(casNumber.slice(-1)) || 0;
 
-    if (lastDigit < 3) return ['GHS07']; // Irritante
-    if (lastDigit < 6) return ['GHS06', 'GHS05']; // Tóxico + Corrosivo
-    return ['GHS06', 'GHS08', 'GHS05']; // Muy tóxico + peligro salud + corrosivo
+    if (lastDigit < 3) return ['GHS07'];
+    if (lastDigit < 6) return ['GHS06', 'GHS05'];
+    return ['GHS06', 'GHS08', 'GHS05'];
   },
 
-  // Autocompletar datos de reactivo
-  async enrichReagentData(name: string, casNumber?: string) {
+  // Buscar y formatear para autocompletado
+  async searchForRequestItem(query: string): Promise<any[]> {
     try {
-      const searchResults = await this.searchByName(name);
+      const results = await this.searchByName(query);
 
-      if (searchResults.length === 0) {
-        return null;
+      if (results.length === 0) {
+        return [{
+          value: 0,
+          label: `No se encontró "${query}". Intenta con un nombre más específico.`,
+          disabled: true  // Solo este mensaje debe estar disabled
+        }];
       }
 
-      const firstResult = searchResults[0];
-      const details = await this.getCompoundDetails(firstResult.cid);
-
-      if (!details) return null;
-
-      // Obtener pictogramas
-      const pictograms = await this.getGHSPictograms(casNumber || '');
-
-      return {
-        ...details,
-        ghsPictograms: pictograms,
-        searchResults, // Incluir resultados para vista previa
-      };
+      return results.map(r => ({
+        value: r.cid,
+        label: `${r.name} (${r.formula || 'Fórmula desconocida'})`,
+        formula: r.formula,
+        cid: r.cid,
+        name: r.name,
+        molecularWeight: r.molecularWeight,
+        disabled: false  // Asegurar que no esté disabled
+      }));
     } catch (error) {
-      console.error('Error enriching reagent data:', error);
-      return null;
+      console.error('Error searching for request item:', error);
+      return [];
     }
   }
 };

@@ -32,9 +32,13 @@ import {
   Brightness7 as LightModeIcon,
   Notifications as NotificationsIcon,
   Person as PersonIcon,
+  Assessment as AssessmentIcon,
+  Assignment as RequestIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme as useAppTheme } from '../../theme';
+import { NotificationBell } from '../notifications/NotificationBell';
+
 
 const drawerWidth = 280;
 
@@ -60,6 +64,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     { text: 'Reactivos', icon: <ScienceIcon />, path: '/reagents' },
     { text: 'Equipos', icon: <BiotechIcon />, path: '/equipment' },
     { text: 'Experimentos', icon: <ScienceIcon />, path: '/experiments' },
+    { text: 'Reportes', icon: <AssessmentIcon />, path: '/reports' },
+    { text: 'Solicitudes', icon: <RequestIcon />, path: '/requests' },
   ];
 
   const drawer = (
@@ -141,17 +147,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               </IconButton>
             </Tooltip>
 
-            {/* Notificaciones */}
-            <Tooltip title="Notificaciones">
-              <IconButton
-                color="inherit"
-                onClick={(e) => setNotificationsAnchor(e.currentTarget)}
-              >
-                <Badge badgeContent={3} color="error">
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
-            </Tooltip>
+            <NotificationBell />
+
+
 
             {/* Menú de usuario */}
             <Tooltip title="Perfil">

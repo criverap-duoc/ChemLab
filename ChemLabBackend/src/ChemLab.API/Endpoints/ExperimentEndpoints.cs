@@ -62,10 +62,15 @@ public static class ExperimentEndpoints
                 Status = e.Status.ToString(),
                 e.StartDate,
                 e.EndDate,
+                e.Protocol,
+                e.Notes,
                 CreatedBy = $"{e.CreatedBy.FirstName} {e.CreatedBy.LastName}",
                 ReagentsCount = e.Reagents.Count,
                 EquipmentCount = e.Equipment.Count,
-                e.CreatedAt
+                Reagents = e.Reagents.Select(r => new { r.ReagentId, r.Reagent.Name, r.QuantityUsed, r.Unit, r.BatchNumber }),
+                Equipment = e.Equipment.Select(eq => new { eq.EquipmentId, eq.Equipment.Name, eq.UsageHours }),
+                e.CreatedAt,
+                e.UpdatedAt
             })
             .ToListAsync();
 
@@ -150,6 +155,38 @@ public static class ExperimentEndpoints
             IsActive = true
         };
 
+        // Agregar reactivos
+        if (dto.Reagents != null)
+        {
+            foreach (var reagent in dto.Reagents)
+            {
+                experiment.Reagents.Add(new ExperimentReagent
+                {
+                    Id = Guid.NewGuid(),
+                    ReagentId = reagent.ReagentId,
+                    QuantityUsed = reagent.QuantityUsed,
+                    Unit = reagent.Unit,
+                    BatchNumber = reagent.BatchNumber
+                });
+            }
+        }
+
+        // Agregar equipos
+        if (dto.Equipment != null)
+        {
+            foreach (var eq in dto.Equipment)
+            {
+                experiment.Equipment.Add(new ExperimentEquipment
+                {
+                    Id = Guid.NewGuid(),
+                    EquipmentId = eq.EquipmentId,
+                    UsageHours = eq.UsageHours,
+                    CalibrationBefore = eq.CalibrationBefore,
+                    CalibrationAfter = eq.CalibrationAfter
+                });
+            }
+        }
+
         context.Experiments.Add(experiment);
         await context.SaveChangesAsync();
 
@@ -161,17 +198,66 @@ public static class ExperimentEndpoints
         [FromBody] UpdateExperimentDto dto,
         ApplicationDbContext context)
     {
-        var experiment = await context.Experiments.FindAsync(id);
-        if (experiment is null || !experiment.IsActive)
+        // Cargar el experimento con sus relaciones
+        var experiment = await context.Experiments
+            .Include(e => e.Reagents)
+            .Include(e => e.Equipment)
+            .FirstOrDefaultAsync(e => e.Id == id && e.IsActive);
+
+        if (experiment is null)
             return Results.NotFound();
 
+        // Actualizar campos básicos
         experiment.Name = dto.Name ?? experiment.Name;
         experiment.Description = dto.Description ?? experiment.Description;
         experiment.Protocol = dto.Protocol ?? experiment.Protocol;
         experiment.Results = dto.Results ?? experiment.Results;
         experiment.Notes = dto.Notes ?? experiment.Notes;
+        experiment.StartDate = dto.StartDate ?? experiment.StartDate;
         experiment.EndDate = dto.EndDate ?? experiment.EndDate;
         experiment.UpdatedAt = DateTime.UtcNow;
+
+        // Actualizar reactivos (eliminar existentes y agregar nuevos)
+        if (dto.Reagents != null)
+        {
+            // Eliminar los reactivos existentes
+            context.ExperimentReagents.RemoveRange(experiment.Reagents);
+
+            // Agregar los nuevos
+            foreach (var reagent in dto.Reagents)
+            {
+                experiment.Reagents.Add(new ExperimentReagent
+                {
+                    Id = Guid.NewGuid(),
+                    ExperimentId = id,
+                    ReagentId = reagent.ReagentId,
+                    QuantityUsed = reagent.QuantityUsed,
+                    Unit = reagent.Unit,
+                    BatchNumber = reagent.BatchNumber
+                });
+            }
+        }
+
+        // Actualizar equipos
+        if (dto.Equipment != null)
+        {
+            // Eliminar los equipos existentes
+            context.ExperimentEquipment.RemoveRange(experiment.Equipment);
+
+            // Agregar los nuevos
+            foreach (var eq in dto.Equipment)
+            {
+                experiment.Equipment.Add(new ExperimentEquipment
+                {
+                    Id = Guid.NewGuid(),
+                    ExperimentId = id,
+                    EquipmentId = eq.EquipmentId,
+                    UsageHours = eq.UsageHours,
+                    CalibrationBefore = eq.CalibrationBefore,
+                    CalibrationAfter = eq.CalibrationAfter
+                });
+            }
+        }
 
         await context.SaveChangesAsync();
         return Results.Ok(new { Message = "Experiment updated successfully" });
@@ -296,6 +382,24 @@ public class CreateExperimentDto
     public DateTime? StartDate { get; set; }
     public string? Protocol { get; set; }
     public string? Notes { get; set; }
+    public List<CreateExperimentReagentDto>? Reagents { get; set; }
+    public List<CreateExperimentEquipmentDto>? Equipment { get; set; }
+}
+
+public class CreateExperimentReagentDto
+{
+    public Guid ReagentId { get; set; }
+    public decimal QuantityUsed { get; set; }
+    public string Unit { get; set; } = string.Empty;
+    public string? BatchNumber { get; set; }
+}
+
+public class CreateExperimentEquipmentDto
+{
+    public Guid EquipmentId { get; set; }
+    public double? UsageHours { get; set; }
+    public string? CalibrationBefore { get; set; }
+    public string? CalibrationAfter { get; set; }
 }
 
 public class UpdateExperimentDto
@@ -305,7 +409,26 @@ public class UpdateExperimentDto
     public string? Protocol { get; set; }
     public string? Results { get; set; }
     public string? Notes { get; set; }
+    public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
+    public List<UpdateExperimentReagentDto>? Reagents { get; set; }
+    public List<UpdateExperimentEquipmentDto>? Equipment { get; set; }
+}
+
+public class UpdateExperimentReagentDto
+{
+    public Guid ReagentId { get; set; }
+    public decimal QuantityUsed { get; set; }
+    public string Unit { get; set; } = string.Empty;
+    public string? BatchNumber { get; set; }
+}
+
+public class UpdateExperimentEquipmentDto
+{
+    public Guid EquipmentId { get; set; }
+    public double? UsageHours { get; set; }
+    public string? CalibrationBefore { get; set; }
+    public string? CalibrationAfter { get; set; }
 }
 
 public class UpdateStatusDto

@@ -37,6 +37,24 @@ import { experimentService } from '../../services/experimentService';
 import { Experiment, ExperimentStatus } from '../../types/experiment';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { ExperimentReagentSelector } from './ExperimentReagentSelector';
+import { ExperimentEquipmentSelector } from './ExperimentEquipmentSelector';
+
+interface SelectedReagent {
+  reagentId: string;
+  reagentName: string;
+  quantityUsed: number;
+  unit: string;
+  batchNumber?: string;
+}
+
+interface SelectedEquipment {
+  equipmentId: string;
+  equipmentName: string;
+  usageHours?: number;
+  calibrationBefore?: string;
+  calibrationAfter?: string;
+}
 
 export const ExperimentList: React.FC = () => {
   const [experiments, setExperiments] = useState<Experiment[]>([]);
@@ -51,11 +69,12 @@ export const ExperimentList: React.FC = () => {
     description: '',
     protocol: '',
     notes: '',
+    startDate: '',
   });
 
-  useEffect(() => {
-    loadExperiments();
-  }, [page, statusFilter]);
+  const [selectedReagents, setSelectedReagents] = useState<SelectedReagent[]>([]);
+  const [selectedEquipment, setSelectedEquipment] = useState<SelectedEquipment[]>([]);
+
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingExperiment, setEditingExperiment] = useState<Experiment | null>(null);
   const [editFormData, setEditFormData] = useState({
@@ -63,7 +82,14 @@ export const ExperimentList: React.FC = () => {
     description: '',
     protocol: '',
     notes: '',
+    startDate: ''
   });
+  const [editReagents, setEditReagents] = useState<SelectedReagent[]>([]);
+  const [editEquipment, setEditEquipment] = useState<SelectedEquipment[]>([]);
+
+  useEffect(() => {
+    loadExperiments();
+  }, [page, statusFilter]);
 
   const loadExperiments = async () => {
     try {
@@ -81,9 +107,21 @@ export const ExperimentList: React.FC = () => {
 
   const handleCreateExperiment = async () => {
     try {
-      await experimentService.create(formData);
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        protocol: formData.protocol || undefined,
+        notes: formData.notes || undefined,
+        startDate: formData.startDate || undefined,
+        reagents: selectedReagents,
+        equipment: selectedEquipment
+      };
+
+      await experimentService.create(payload);
       setOpenDialog(false);
-      setFormData({ name: '', description: '', protocol: '', notes: '' });
+      setFormData({ name: '', description: '', protocol: '', notes: '', startDate: '' });
+      setSelectedReagents([]);
+      setSelectedEquipment([]);
       loadExperiments();
     } catch (error) {
       console.error('Error creating experiment:', error);
@@ -110,14 +148,37 @@ export const ExperimentList: React.FC = () => {
     }
   };
 
-  const handleEdit = async (experiment: Experiment) => {
+  const handleEditExperiment = async (experiment: Experiment) => {
     setEditingExperiment(experiment);
+
     setEditFormData({
       name: experiment.name,
       description: experiment.description,
       protocol: experiment.protocol || '',
       notes: experiment.notes || '',
+      startDate: experiment.startDate?.split('T')[0] || ''
     });
+
+    // Cargar reactivos asociados (sin acceder a r.reagent)
+    const reagentsList = experiment.reagents?.map(r => ({
+      reagentId: r.reagentId,
+      reagentName: r.reagentName || `Reactivo ${r.reagentId.slice(0, 8)}`,
+      quantityUsed: r.quantityUsed,
+      unit: r.unit,
+      batchNumber: r.batchNumber
+    })) || [];
+    setEditReagents(reagentsList);
+
+    // Cargar equipos asociados
+    const equipmentList = experiment.equipment?.map(e => ({
+      equipmentId: e.equipmentId,
+      equipmentName: e.equipmentName || `Equipo ${e.equipmentId.slice(0, 8)}`,
+      usageHours: e.usageHours,
+      calibrationBefore: e.calibrationBefore,
+      calibrationAfter: e.calibrationAfter
+    })) || [];
+    setEditEquipment(equipmentList);
+
     setEditDialogOpen(true);
   };
 
@@ -125,7 +186,17 @@ export const ExperimentList: React.FC = () => {
     if (!editingExperiment) return;
 
     try {
-      await experimentService.update(editingExperiment.id, editFormData);
+      const payload = {
+        name: editFormData.name,
+        description: editFormData.description,
+        protocol: editFormData.protocol || undefined,
+        notes: editFormData.notes || undefined,
+        startDate: editFormData.startDate || undefined,
+        reagents: editReagents,
+        equipment: editEquipment
+      };
+
+      await experimentService.update(editingExperiment.id, payload);
       setEditDialogOpen(false);
       setEditingExperiment(null);
       loadExperiments();
@@ -247,7 +318,6 @@ export const ExperimentList: React.FC = () => {
       {/* Grid de experimentos */}
       <Grid container spacing={3}>
         {filteredExperiments.map((exp) => {
-          // Convertir status a string para comparaciones
           const statusStr = typeof exp.status === 'number'
             ? ['Planned', 'InProgress', 'Completed', 'Cancelled', 'Failed'][exp.status]
             : exp.status;
@@ -256,7 +326,6 @@ export const ExperimentList: React.FC = () => {
             <Grid item xs={12} md={6} lg={4} key={exp.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent>
-                  {/* Header con nombre y estado */}
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                     <Box>
                       <Typography variant="h6" gutterBottom>
@@ -278,7 +347,6 @@ export const ExperimentList: React.FC = () => {
                     />
                   </Box>
 
-                  {/* Detalles */}
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="body2">
                       <strong>Inicio:</strong> {exp.startDate ? format(new Date(exp.startDate), 'dd/MM/yyyy', { locale: es }) : 'No definido'}
@@ -306,7 +374,6 @@ export const ExperimentList: React.FC = () => {
                   </Box>
                 </CardContent>
 
-                {/* Botones de acción */}
                 <CardActions sx={{ mt: 'auto', justifyContent: 'flex-end' }}>
                   {statusStr === 'Planned' && (
                     <Tooltip title="Iniciar experimento">
@@ -345,7 +412,7 @@ export const ExperimentList: React.FC = () => {
 
                   <Tooltip title="Editar">
                     <IconButton
-                      onClick={() => handleEdit(exp)}
+                      onClick={() => handleEditExperiment(exp)}
                       color="primary"
                       size="small"
                     >
@@ -415,12 +482,29 @@ export const ExperimentList: React.FC = () => {
           />
           <TextField
             fullWidth
+            label="Fecha de inicio"
+            type="date"
+            margin="normal"
+            InputLabelProps={{ shrink: true }}
+            value={formData.startDate}
+            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+          />
+          <TextField
+            fullWidth
             label="Notas adicionales"
             margin="normal"
             multiline
             rows={2}
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+          />
+          <ExperimentReagentSelector
+            value={selectedReagents}
+            onChange={setSelectedReagents}
+          />
+          <ExperimentEquipmentSelector
+            value={selectedEquipment}
+            onChange={setSelectedEquipment}
           />
         </DialogContent>
         <DialogActions>
@@ -430,6 +514,7 @@ export const ExperimentList: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
       {/* Diálogo de edición */}
       <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Editar Experimento</DialogTitle>
@@ -470,6 +555,23 @@ export const ExperimentList: React.FC = () => {
             rows={2}
             value={editFormData.notes}
             onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+          />
+          <TextField
+            fullWidth
+            label="Fecha de inicio"
+            type="date"
+            margin="normal"
+            InputLabelProps={{ shrink: true }}
+            value={editFormData.startDate}
+            onChange={(e) => setEditFormData({ ...editFormData, startDate: e.target.value })}
+          />
+          <ExperimentReagentSelector
+            value={editReagents}
+            onChange={setEditReagents}
+          />
+          <ExperimentEquipmentSelector
+            value={editEquipment}
+            onChange={setEditEquipment}
           />
         </DialogContent>
         <DialogActions>

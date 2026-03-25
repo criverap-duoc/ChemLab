@@ -67,7 +67,7 @@ namespace ChemLab.Infrastructure.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("Equipment");
+                    b.ToTable("Equipment", (string)null);
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.Experiment", b =>
@@ -122,7 +122,7 @@ namespace ChemLab.Infrastructure.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("Experiments");
+                    b.ToTable("Experiments", (string)null);
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.ExperimentEquipment", b =>
@@ -152,7 +152,7 @@ namespace ChemLab.Infrastructure.Migrations
 
                     b.HasIndex("ExperimentId");
 
-                    b.ToTable("ExperimentEquipment");
+                    b.ToTable("ExperimentEquipment", (string)null);
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.ExperimentReagent", b =>
@@ -184,7 +184,7 @@ namespace ChemLab.Infrastructure.Migrations
 
                     b.HasIndex("ReagentId");
 
-                    b.ToTable("ExperimentReagents");
+                    b.ToTable("ExperimentReagents", (string)null);
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.Notification", b =>
@@ -228,7 +228,7 @@ namespace ChemLab.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.Reagent", b =>
@@ -295,7 +295,7 @@ namespace ChemLab.Infrastructure.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("Reagents");
+                    b.ToTable("Reagents", (string)null);
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.Request", b =>
@@ -352,7 +352,7 @@ namespace ChemLab.Infrastructure.Migrations
 
                     b.HasIndex("RequestedById");
 
-                    b.ToTable("Requests");
+                    b.ToTable("Requests", (string)null);
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.RequestItem", b =>
@@ -400,7 +400,7 @@ namespace ChemLab.Infrastructure.Migrations
 
                     b.HasIndex("RequestId");
 
-                    b.ToTable("RequestItems");
+                    b.ToTable("RequestItems", (string)null);
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.User", b =>

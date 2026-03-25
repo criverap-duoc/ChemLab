@@ -5,7 +5,6 @@ import {
   Grid,
   Card,
   CardContent,
-  CardActions,
   Button,
   Box,
   Paper,
@@ -13,6 +12,8 @@ import {
   Divider,
   Alert,
   CircularProgress,
+  Tab,
+  Tabs,
 } from '@mui/material';
 import {
   PictureAsPdf as PdfIcon,
@@ -21,6 +22,7 @@ import {
   Science as ScienceIcon,
   Biotech as BiotechIcon,
   Timeline as TimelineIcon,
+  Download as DownloadIcon,
 } from '@mui/icons-material';
 import { reportService } from '../../services/reportService';
 import { reagentService } from '../../services/reagentService';
@@ -33,6 +35,7 @@ export const ReportsDashboard: React.FC = () => {
   const [experiments, setExperiments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tabValue, setTabValue] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -91,12 +94,33 @@ export const ReportsDashboard: React.FC = () => {
     reportService.exportToExcel(data, 'equipos_chemlab', 'Equipos');
   };
 
+  const handleExportExperimentsExcel = () => {
+    const data = experiments.map(e => ({
+      Nombre: e.name,
+      Descripción: e.description,
+      Estado: e.status === 0 ? 'Planificado' :
+              e.status === 1 ? 'En progreso' :
+              e.status === 2 ? 'Completado' :
+              e.status === 3 ? 'Cancelado' : 'Fallido',
+      'Fecha Inicio': new Date(e.startDate).toLocaleDateString(),
+      'Fecha Fin': e.endDate ? new Date(e.endDate).toLocaleDateString() : 'En curso',
+      'Reactivos Usados': e.reagentsCount || 0,
+      'Equipos Usados': e.equipmentCount || 0,
+      'Creado por': e.createdBy
+    }));
+    reportService.exportToExcel(data, 'experimentos_chemlab', 'Experimentos');
+  };
+
   const handleExportReagentsPDF = () => {
     reportService.exportReagentsToPDF(reagents, 'reactivos_chemlab');
   };
 
   const handleExportEquipmentPDF = () => {
     reportService.exportEquipmentToPDF(equipment, 'equipos_chemlab');
+  };
+
+  const handleExportExperimentsPDF = () => {
+    reportService.exportExperimentsToPDF(experiments, 'experimentos_chemlab');
   };
 
   const handleExportSummaryPDF = () => {
@@ -130,183 +154,232 @@ export const ReportsDashboard: React.FC = () => {
         </Typography>
       </Box>
 
-      <Grid container spacing={3}>
-        {/* Tarjetas de resumen */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 3, mb: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Resumen del Laboratorio
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={4}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <ScienceIcon color="primary" sx={{ fontSize: 40 }} />
-                      <Box>
-                        <Typography variant="h5">{reagents.length}</Typography>
-                        <Typography variant="body2" color="textSecondary">Reactivos</Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <BiotechIcon color="secondary" sx={{ fontSize: 40 }} />
-                      <Box>
-                        <Typography variant="h5">{equipment.length}</Typography>
-                        <Typography variant="body2" color="textSecondary">Equipos</Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <TimelineIcon color="success" sx={{ fontSize: 40 }} />
-                      <Box>
-                        <Typography variant="h5">{experiments.length}</Typography>
-                        <Typography variant="body2" color="textSecondary">Experimentos</Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
+      {/* Tabs */}
+      <Paper sx={{ mb: 3 }}>
+        <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
+          <Tab label="📊 Resumen" />
+          <Tab label="🧪 Reactivos" />
+          <Tab label="🔧 Equipos" />
+          <Tab label="🧬 Experimentos" />
+        </Tabs>
+      </Paper>
 
-        {/* Reportes de Reactivos */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <ScienceIcon color="primary" />
-                <Typography variant="h6">Reportes de Reactivos</Typography>
-              </Box>
-              <Divider sx={{ mb: 2 }} />
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2">Exportar a Excel</Typography>
-                  <Button
-                    variant="outlined"
-                    startIcon={<ExcelIcon />}
-                    onClick={handleExportReagentsExcel}
-                    size="small"
-                  >
-                    Exportar
-                  </Button>
-                </Box>
-
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2">Exportar a PDF</Typography>
-                  <Button
-                    variant="outlined"
-                    startIcon={<PdfIcon />}
-                    onClick={handleExportReagentsPDF}
-                    size="small"
-                    color="error"
-                  >
-                    Exportar
-                  </Button>
-                </Box>
-              </Box>
-
-              <Box sx={{ mt: 2 }}>
-                <Chip
-                  label={`${reagents.length} reactivos disponibles`}
-                  size="small"
-                  color="primary"
-                  variant="outlined"
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Reportes de Equipos */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <BiotechIcon color="secondary" />
-                <Typography variant="h6">Reportes de Equipos</Typography>
-              </Box>
-              <Divider sx={{ mb: 2 }} />
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2">Exportar a Excel</Typography>
-                  <Button
-                    variant="outlined"
-                    startIcon={<ExcelIcon />}
-                    onClick={handleExportEquipmentExcel}
-                    size="small"
-                  >
-                    Exportar
-                  </Button>
-                </Box>
-
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2">Exportar a PDF</Typography>
-                  <Button
-                    variant="outlined"
-                    startIcon={<PdfIcon />}
-                    onClick={handleExportEquipmentPDF}
-                    size="small"
-                    color="error"
-                  >
-                    Exportar
-                  </Button>
-                </Box>
-              </Box>
-
-              <Box sx={{ mt: 2 }}>
-                <Chip
-                  label={`${equipment.length} equipos registrados`}
-                  size="small"
-                  color="secondary"
-                  variant="outlined"
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Reporte Ejecutivo */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <ReportIcon color="success" />
-                <Typography variant="h6">Reporte Ejecutivo</Typography>
-              </Box>
-              <Divider sx={{ mb: 2 }} />
-
-              <Typography variant="body2" color="textSecondary" paragraph>
-                Genera un reporte completo con resumen de inventario, experimentos recientes y estadísticas generales del laboratorio.
+      {/* Resumen */}
+      {tabValue === 0 && (
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Paper sx={{ p: 3, mb: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Resumen del Laboratorio
               </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <ScienceIcon color="primary" sx={{ fontSize: 40 }} />
+                        <Box>
+                          <Typography variant="h5">{reagents.length}</Typography>
+                          <Typography variant="body2" color="textSecondary">Reactivos</Typography>
+                        </Box>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <BiotechIcon color="secondary" sx={{ fontSize: 40 }} />
+                        <Box>
+                          <Typography variant="h5">{equipment.length}</Typography>
+                          <Typography variant="body2" color="textSecondary">Equipos</Typography>
+                        </Box>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <TimelineIcon color="success" sx={{ fontSize: 40 }} />
+                        <Box>
+                          <Typography variant="h5">{experiments.length}</Typography>
+                          <Typography variant="body2" color="textSecondary">Experimentos</Typography>
+                        </Box>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
 
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Divider sx={{ my: 3 }} />
+
+              <Typography variant="subtitle1" gutterBottom>
+                Exportar todo
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                 <Button
                   variant="contained"
-                  startIcon={<PdfIcon />}
+                  startIcon={<DownloadIcon />}
                   onClick={handleExportSummaryPDF}
                   color="success"
                 >
-                  Generar Reporte Ejecutivo
+                  Reporte Ejecutivo (PDF)
                 </Button>
               </Box>
-            </CardContent>
-          </Card>
+            </Paper>
+          </Grid>
         </Grid>
-      </Grid>
+      )}
+
+      {/* Reactivos */}
+      {tabValue === 1 && (
+        <Card>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <ScienceIcon color="primary" />
+              <Typography variant="h6">Reportes de Reactivos</Typography>
+            </Box>
+            <Divider sx={{ mb: 2 }} />
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2">Exportar a Excel</Typography>
+                <Button
+                  variant="outlined"
+                  startIcon={<ExcelIcon />}
+                  onClick={handleExportReagentsExcel}
+                  size="small"
+                >
+                  Exportar
+                </Button>
+              </Box>
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2">Exportar a PDF</Typography>
+                <Button
+                  variant="outlined"
+                  startIcon={<PdfIcon />}
+                  onClick={handleExportReagentsPDF}
+                  size="small"
+                  color="error"
+                >
+                  Exportar
+                </Button>
+              </Box>
+            </Box>
+
+            <Box sx={{ mt: 2 }}>
+              <Chip
+                label={`${reagents.length} reactivos disponibles`}
+                size="small"
+                color="primary"
+                variant="outlined"
+              />
+            </Box>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Equipos */}
+      {tabValue === 2 && (
+        <Card>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <BiotechIcon color="secondary" />
+              <Typography variant="h6">Reportes de Equipos</Typography>
+            </Box>
+            <Divider sx={{ mb: 2 }} />
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2">Exportar a Excel</Typography>
+                <Button
+                  variant="outlined"
+                  startIcon={<ExcelIcon />}
+                  onClick={handleExportEquipmentExcel}
+                  size="small"
+                >
+                  Exportar
+                </Button>
+              </Box>
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2">Exportar a PDF</Typography>
+                <Button
+                  variant="outlined"
+                  startIcon={<PdfIcon />}
+                  onClick={handleExportEquipmentPDF}
+                  size="small"
+                  color="error"
+                >
+                  Exportar
+                </Button>
+              </Box>
+            </Box>
+
+            <Box sx={{ mt: 2 }}>
+              <Chip
+                label={`${equipment.length} equipos registrados`}
+                size="small"
+                color="secondary"
+                variant="outlined"
+              />
+            </Box>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Experimentos */}
+      {tabValue === 3 && (
+        <Card>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <TimelineIcon color="info" />
+              <Typography variant="h6">Reportes de Experimentos</Typography>
+            </Box>
+            <Divider sx={{ mb: 2 }} />
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2">Exportar a Excel</Typography>
+                <Button
+                  variant="outlined"
+                  startIcon={<ExcelIcon />}
+                  onClick={handleExportExperimentsExcel}
+                  size="small"
+                >
+                  Exportar
+                </Button>
+              </Box>
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2">Exportar a PDF</Typography>
+                <Button
+                  variant="outlined"
+                  startIcon={<PdfIcon />}
+                  onClick={handleExportExperimentsPDF}
+                  size="small"
+                  color="error"
+                >
+                  Exportar
+                </Button>
+              </Box>
+            </Box>
+
+            <Box sx={{ mt: 2 }}>
+              <Chip
+                label={`${experiments.length} experimentos realizados`}
+                size="small"
+                color="info"
+                variant="outlined"
+              />
+            </Box>
+          </CardContent>
+        </Card>
+      )}
     </Container>
   );
 };

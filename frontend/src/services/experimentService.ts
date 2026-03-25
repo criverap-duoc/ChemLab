@@ -32,13 +32,19 @@ export const experimentService = {
     return response.data;
   },
 
-  async create(data: CreateExperimentDto): Promise<{ id: string }> {
-    // Asegurar que el backend reciba todos los campos necesarios
-    const experimentData = {
-      ...data,
-      // Si quieres forzar un status, pero idealmente debe venir del backend
+  async create(data: any): Promise<{ id: string }> {
+    // Asegurar que los datos tienen el formato correcto
+    const payload = {
+      name: data.name,
+      description: data.description,
+      protocol: data.protocol || null,
+      notes: data.notes || null,
+      startDate: data.startDate || null,
+      reagents: data.reagents || [],
+      equipment: data.equipment || []
     };
-    const response = await api.post('/experiments', experimentData);
+
+    const response = await api.post('/experiments', payload);
     return response.data;
   },
 

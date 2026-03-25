@@ -54,15 +54,16 @@ export interface Experiment {
 
 export interface ExperimentReagent {
   reagentId: string;
-  reagentName: string;
+  reagentName?: string;
   quantityUsed: number;
   unit: string;
   batchNumber?: string;
 }
 
+
 export interface ExperimentEquipment {
   equipmentId: string;
-  equipmentName: string;
+  equipmentName?: string;
   usageHours?: number;
   calibrationBefore?: string;
   calibrationAfter?: string;

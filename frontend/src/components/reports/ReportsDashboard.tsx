@@ -18,7 +18,6 @@ import {
 import {
   PictureAsPdf as PdfIcon,
   TableChart as ExcelIcon,
-  Assessment as ReportIcon,
   Science as ScienceIcon,
   Biotech as BiotechIcon,
   Timeline as TimelineIcon,

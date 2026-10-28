@@ -16,10 +16,7 @@ import {
   Avatar,
   Menu,
   MenuItem,
-  Switch,
-  Badge,
   Tooltip,
-  useTheme,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -30,7 +27,6 @@ import {
   Logout as LogoutIcon,
   Brightness4 as DarkModeIcon,
   Brightness7 as LightModeIcon,
-  Notifications as NotificationsIcon,
   Person as PersonIcon,
   Assessment as AssessmentIcon,
   Assignment as RequestIcon,
@@ -52,7 +48,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [notificationsAnchor, setNotificationsAnchor] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const theme = useTheme();
   const { mode, toggleTheme } = useAppTheme();
 
   const handleDrawerToggle = () => {

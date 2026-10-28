@@ -75,10 +75,10 @@ export const requestStatusColors: Record<RequestStatus, string> = {
 };
 
 export const requestPriorityColors: Record<RequestPriority, string> = {
-  [0]: '#8bc34a',           // Verde claro - Baja
-  [1]: '#ff9800',           // Naranja - Media
-  [2]: '#f44336',           // Rojo - Alta
-  [3]: '#9c27b0'            // Morado - Urgente
+  0: '#8bc34a',           // Verde claro - Baja
+  1: '#ff9800',           // Naranja - Media
+  2: '#f44336',           // Rojo - Alta
+  3: '#9c27b0'            // Morado - Urgente
 };
 
 export const requestTypeIcons: Record<RequestType, string> = {

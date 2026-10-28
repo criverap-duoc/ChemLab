@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IconButton,
   Badge,
@@ -13,7 +13,6 @@ import {
   ListItemText,
   ListItemIcon,
   ListItemSecondaryAction,
-  Chip,
   Alert,
 } from '@mui/material';
 import {

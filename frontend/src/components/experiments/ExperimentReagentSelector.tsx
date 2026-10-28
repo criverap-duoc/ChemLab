@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Grid,
@@ -46,18 +46,18 @@ export const ExperimentReagentSelector: React.FC<ExperimentReagentSelectorProps>
   const [unit, setUnit] = useState<string>('ml');
   const [batchNumber, setBatchNumber] = useState<string>('');
 
-  useEffect(() => {
-    loadReagents();
-  }, []);
-
-  const loadReagents = async () => {
+  const loadReagents = useCallback(async () => {
     try {
-      const data = await reagentService.getAll();
+      const data = await reagentService.getAll(1, 100);
       setReagents(data.data);
     } catch (error) {
       console.error('Error loading reagents:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadReagents();
+  }, [loadReagents]);
 
   const handleAddReagent = () => {
     if (!selectedReagent) return;

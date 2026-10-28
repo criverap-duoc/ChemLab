@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Container,
   Typography,
@@ -58,7 +58,6 @@ interface SelectedEquipment {
 
 export const ExperimentList: React.FC = () => {
   const [experiments, setExperiments] = useState<Experiment[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,23 +86,20 @@ export const ExperimentList: React.FC = () => {
   const [editReagents, setEditReagents] = useState<SelectedReagent[]>([]);
   const [editEquipment, setEditEquipment] = useState<SelectedEquipment[]>([]);
 
-  useEffect(() => {
-    loadExperiments();
-  }, [page, statusFilter]);
-
-  const loadExperiments = async () => {
+  const loadExperiments = useCallback(async () => {
     try {
-      setLoading(true);
       const status = statusFilter === 'all' ? undefined : statusFilter;
       const data = await experimentService.getAll(page, 12, status);
       setExperiments(data.data);
       setTotalPages(data.totalPages);
     } catch (error) {
       console.error('Error loading experiments:', error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [page, statusFilter]);
+
+  useEffect(() => {
+    loadExperiments();
+  }, [loadExperiments]);
 
   const handleCreateExperiment = async () => {
     try {

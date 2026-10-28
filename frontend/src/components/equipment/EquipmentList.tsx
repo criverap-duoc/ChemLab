@@ -23,7 +23,6 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Science as ScienceIcon,
   Search as SearchIcon,
   CalendarToday as CalendarIcon,
   Build as BuildIcon,

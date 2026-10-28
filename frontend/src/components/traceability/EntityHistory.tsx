@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Timeline,
   TimelineItem,
@@ -49,13 +49,7 @@ export const EntityHistory: React.FC<EntityHistoryProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (open && entityId) {
-      loadHistory();
-    }
-  }, [open, entityId]);
-
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -66,7 +60,13 @@ export const EntityHistory: React.FC<EntityHistoryProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [entityType, entityId]);
+
+  useEffect(() => {
+    if (open && entityId) {
+      loadHistory();
+    }
+  }, [open, entityId, loadHistory]);
 
   const getActionIcon = (action: string) => {
     switch (action?.toUpperCase()) {

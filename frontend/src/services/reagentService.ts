@@ -1,17 +1,9 @@
 import api from './api';
 import { Reagent, CreateReagentDto } from '../types';
 
-interface ReagentResponse {
-  data: Reagent[];
-  page: number;
-  pageSize: number;
-  totalCount: number;
-  totalPages: number;
-}
-
 export const reagentService = {
-  async getAll(): Promise<{ data: Reagent[] }> {
-    const response = await api.get('/reagents');
+  async getAll(page = 1, pageSize = 20): Promise<{ data: Reagent[] }> {
+    const response = await api.get('/reagents', { params: { page, pageSize } });
     return response.data;
   },
 

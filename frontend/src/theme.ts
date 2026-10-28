@@ -1,5 +1,5 @@
 import { createTheme, ThemeOptions } from '@mui/material/styles';
-import { useMemo, useState, createContext, useContext } from 'react';
+import { createContext, useContext } from 'react';
 
 // Colores personalizados para el laboratorio
 const labColors = {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Container,
   Typography,
@@ -25,14 +25,12 @@ import {
   Select,
   Avatar,
   Divider,
-  Alert,
   Tab,
   Tabs,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Search as SearchIcon,
-  FilterList as FilterIcon,
   CheckCircle as ApproveIcon,
   Cancel as CancelIcon,
   Delete as DeleteIcon,
@@ -69,7 +67,6 @@ interface RequestFormItem {
 
 export const RequestList: React.FC = () => {
   const [requests, setRequests] = useState<Request[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -109,13 +106,8 @@ export const RequestList: React.FC = () => {
 
   const { isAdmin, canApproveRequests } = usePermissions();
 
-  useEffect(() => {
-    loadRequests();
-  }, [page, statusFilter, typeFilter, tabValue]);
-
-  const loadRequests = async () => {
+  const loadRequests = useCallback(async () => {
     try {
-      setLoading(true);
       const params: any = { page, pageSize: 12 };
 
       if (statusFilter !== 'all') params.status = statusFilter;
@@ -132,10 +124,12 @@ export const RequestList: React.FC = () => {
       setTotalPages(data.totalPages);
     } catch (error) {
       console.error('Error loading requests:', error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [page, statusFilter, typeFilter, tabValue]);
+
+  useEffect(() => {
+    loadRequests();
+  }, [loadRequests]);
 
   const handleCreateRequest = async () => {
     try {

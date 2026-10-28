@@ -1,5 +1,5 @@
 // @ts-ignore
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Container,
   Typography,
@@ -33,15 +33,13 @@ import {
   Delete as DeleteIcon,
   Science as ScienceIcon,
   Search as SearchIcon,
-  FilterList as FilterIcon,
   Warning as WarningIcon,
   History as HistoryIcon,
 } from '@mui/icons-material';
 import { reagentService } from '../../services/reagentService';
 import { Reagent, CreateReagentDto } from '../../types';
-import { useTheme } from '@mui/material/styles';
 import { EntityHistory } from '../traceability/EntityHistory';
-import { pubchemService, PubChemData, PubChemSearchResult } from '../../services/pubchemService';
+import { pubchemService, PubChemData } from '../../services/pubchemService';
 
 const hazardLevels = [
   { value: 0, label: 'Ninguno', color: '#4caf50', icon: '✅' },
@@ -80,13 +78,7 @@ export const ReagentList: React.FC = () => {
   const [searching, setSearching] = useState(false);
   const [enrichedData, setEnrichedData] = useState<PubChemData | null>(null);
 
-  const theme = useTheme();
-
-  useEffect(() => {
-    loadReagents();
-  }, [page, searchTerm, filterHazard]);
-
-  const loadReagents = async () => {
+  const loadReagents = useCallback(async () => {
     const data = await reagentService.getAll();
     let filtered = data.data;
 
@@ -111,7 +103,11 @@ export const ReagentList: React.FC = () => {
 
     setReagents(paginated);
     setTotalPages(Math.ceil(filtered.length / itemsPerPage));
-  };
+  }, [page, searchTerm, filterHazard]);
+
+  useEffect(() => {
+    loadReagents();
+  }, [loadReagents]);
 
   const handleOpenDialog = (reagent?: Reagent) => {
     if (reagent) {

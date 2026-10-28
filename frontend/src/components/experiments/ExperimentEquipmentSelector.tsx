@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Grid,
   TextField,
   Button,
   IconButton,
-  MenuItem,
   Paper,
   Typography,
   Autocomplete,
@@ -46,18 +45,18 @@ export const ExperimentEquipmentSelector: React.FC<ExperimentEquipmentSelectorPr
   const [calibrationBefore, setCalibrationBefore] = useState<string>('');
   const [calibrationAfter, setCalibrationAfter] = useState<string>('');
 
-  useEffect(() => {
-    loadEquipment();
-  }, []);
-
-  const loadEquipment = async () => {
+  const loadEquipment = useCallback(async () => {
     try {
-      const data = await equipmentService.getAll();
+      const data = await equipmentService.getAll(1, 100);
       setEquipment(data.data);
     } catch (error) {
       console.error('Error loading equipment:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadEquipment();
+  }, [loadEquipment]);
 
   const handleAddEquipment = () => {
     if (!selectedEquipment) return;

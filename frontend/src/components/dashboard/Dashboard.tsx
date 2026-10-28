@@ -34,8 +34,6 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-  LineChart,
-  Line,
 } from 'recharts';
 import { reagentService } from '../../services/reagentService';
 import { equipmentService } from '../../services/equipmentService';

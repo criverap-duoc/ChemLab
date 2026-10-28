@@ -1,0 +1,13 @@
+*.db
+*.db.old
+*.db.bak_*
+*.db-shm
+*.db-wal
+Logs/
+.vs/
+.idea/
+node_modules/
+bin/
+obj/
+.env
+cookies.txt

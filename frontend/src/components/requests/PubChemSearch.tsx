@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import {
   TextField,
   Paper,
@@ -30,20 +30,7 @@ export const PubChemSearch: React.FC<PubChemSearchProps> = ({
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<any>(null);
 
-  useEffect(() => {
-    if (query.length < 3) {
-      setResults([]);
-      return;
-    }
-
-    const delayDebounce = setTimeout(() => {
-      handleSearch();
-    }, 500);
-
-    return () => clearTimeout(delayDebounce);
-  }, [query]);
-
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     if (query.length < 3) return;
 
     setSearching(true);
@@ -55,7 +42,20 @@ export const PubChemSearch: React.FC<PubChemSearchProps> = ({
     } finally {
       setSearching(false);
     }
-  };
+  }, [query]);
+
+  useEffect(() => {
+    if (query.length < 3) {
+      setResults([]);
+      return;
+    }
+
+    const delayDebounce = setTimeout(() => {
+      handleSearch();
+    }, 500);
+
+    return () => clearTimeout(delayDebounce);
+  }, [query, handleSearch]);
 
   const handleSelect = (result: any) => {
     setSelected(result);

@@ -1,4 +1,5 @@
 using ChemLab.Domain.Entities;
+using ChemLab.Domain.Enums;
 using ChemLab.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.SignalR;
@@ -32,9 +33,10 @@ public class NotificationBackgroundService : BackgroundService
             {
                 using var scope = _services.CreateScope();
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
                 await CheckLowStock(context);
-                await CheckUpcomingCalibrations(context);
+                await CheckUpcomingCalibrations(context, notificationService);
                 await CheckPendingRequests(context);
                 await CheckExpiringReagents(context);
 
@@ -82,9 +84,8 @@ public class NotificationBackgroundService : BackgroundService
         }
     }
 
-    private async Task CheckUpcomingCalibrations(ApplicationDbContext context)
+    private async Task CheckUpcomingCalibrations(ApplicationDbContext context, INotificationService notificationService)
     {
-        var today = DateTime.UtcNow;
         var equipment = await context.Equipment
             .Include(e => e.CreatedBy)
             .Where(e => e.IsActive && e.NextCalibration.HasValue)
@@ -94,12 +95,7 @@ public class NotificationBackgroundService : BackgroundService
 
         foreach (var item in equipment)
         {
-            var daysUntil = (item.NextCalibration!.Value - today).Days;
-
-            // Usar el mismo servicio de notificaciones
-            var notificationService = _services.CreateScope().ServiceProvider
-                .GetRequiredService<INotificationService>();
-
+            // Reutiliza el INotificationService del scope actual (antes creaba un scope por equipo sin liberarlo)
             await notificationService.NotifyCalibrationDue(item);
         }
     }
@@ -111,21 +107,20 @@ public class NotificationBackgroundService : BackgroundService
             .Where(r => r.Status == RequestStatus.Pending)
             .ToListAsync();
 
-        foreach (var request in pendingRequests)
+        if (pendingRequests.Count == 0)
+            return;
+
+        // Notificar una sola vez por iteración (antes enviaba un aviso por cada solicitud pendiente)
+        var admins = await GetAdminUsers(context);
+        foreach (var admin in admins)
         {
-            // Notificar a admins sobre solicitudes pendientes (cada 24h)
-            var admins = await GetAdminUsers(context);
-            foreach (var admin in admins)
-            {
-                await SendNotification(
-                    admin.Id,
-                    "📝 Solicitud Pendiente",
-                    $"Hay {pendingRequests.Count} solicitudes pendientes de revisión",
-                    "pending_requests",
-                    null
-                );
-                break; // Solo una notificación por día para no saturar
-            }
+            await SendNotification(
+                admin.Id,
+                "📝 Solicitudes Pendientes",
+                $"Hay {pendingRequests.Count} solicitud(es) pendiente(s) de revisión",
+                "pending_requests",
+                null
+            );
         }
     }
 

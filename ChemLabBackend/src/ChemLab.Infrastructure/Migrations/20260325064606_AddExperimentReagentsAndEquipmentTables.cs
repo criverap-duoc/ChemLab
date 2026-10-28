@@ -11,83 +11,46 @@ namespace ChemLab.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Solo crear las tablas que faltan (ExperimentReagents y ExperimentEquipment)
-            migrationBuilder.CreateTable(
-                name: "ExperimentReagents",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ExperimentId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ReagentId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    QuantityUsed = table.Column<decimal>(type: "TEXT", precision: 18, scale: 4, nullable: false),
-                    Unit = table.Column<string>(type: "TEXT", nullable: false),
-                    BatchNumber = table.Column<string>(type: "TEXT", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ExperimentReagents", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ExperimentReagents_Experiments_ExperimentId",
-                        column: x => x.ExperimentId,
-                        principalTable: "Experiments",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ExperimentReagents_Reagents_ReagentId",
-                        column: x => x.ReagentId,
-                        principalTable: "Reagents",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
+            // IMPORTANTE: la migración AddExperiments ya crea ExperimentReagents y
+            // ExperimentEquipment. Para que esta migración funcione tanto en una BD
+            // recreada desde cero como en una BD antigua donde faltaban esas tablas,
+            // se usa SQL idempotente (IF NOT EXISTS) en lugar de CreateTable.
+            migrationBuilder.Sql(@"
+                CREATE TABLE IF NOT EXISTS ""ExperimentReagents"" (
+                    ""Id"" TEXT NOT NULL CONSTRAINT ""PK_ExperimentReagents"" PRIMARY KEY,
+                    ""ExperimentId"" TEXT NOT NULL,
+                    ""ReagentId"" TEXT NOT NULL,
+                    ""QuantityUsed"" TEXT NOT NULL,
+                    ""Unit"" TEXT NOT NULL,
+                    ""BatchNumber"" TEXT NULL,
+                    CONSTRAINT ""FK_ExperimentReagents_Experiments_ExperimentId"" FOREIGN KEY (""ExperimentId"") REFERENCES ""Experiments"" (""Id"") ON DELETE CASCADE,
+                    CONSTRAINT ""FK_ExperimentReagents_Reagents_ReagentId"" FOREIGN KEY (""ReagentId"") REFERENCES ""Reagents"" (""Id"") ON DELETE RESTRICT
+                );");
 
-            migrationBuilder.CreateTable(
-                name: "ExperimentEquipment",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ExperimentId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    EquipmentId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    UsageHours = table.Column<double>(type: "REAL", nullable: true),
-                    CalibrationBefore = table.Column<string>(type: "TEXT", nullable: true),
-                    CalibrationAfter = table.Column<string>(type: "TEXT", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ExperimentEquipment", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ExperimentEquipment_Equipment_EquipmentId",
-                        column: x => x.EquipmentId,
-                        principalTable: "Equipment",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ExperimentEquipment_Experiments_ExperimentId",
-                        column: x => x.ExperimentId,
-                        principalTable: "Experiments",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+            migrationBuilder.Sql(@"
+                CREATE TABLE IF NOT EXISTS ""ExperimentEquipment"" (
+                    ""Id"" TEXT NOT NULL CONSTRAINT ""PK_ExperimentEquipment"" PRIMARY KEY,
+                    ""ExperimentId"" TEXT NOT NULL,
+                    ""EquipmentId"" TEXT NOT NULL,
+                    ""UsageHours"" REAL NULL,
+                    ""CalibrationBefore"" TEXT NULL,
+                    ""CalibrationAfter"" TEXT NULL,
+                    CONSTRAINT ""FK_ExperimentEquipment_Equipment_EquipmentId"" FOREIGN KEY (""EquipmentId"") REFERENCES ""Equipment"" (""Id"") ON DELETE RESTRICT,
+                    CONSTRAINT ""FK_ExperimentEquipment_Experiments_ExperimentId"" FOREIGN KEY (""ExperimentId"") REFERENCES ""Experiments"" (""Id"") ON DELETE CASCADE
+                );");
 
-            // Crear índices
-            migrationBuilder.CreateIndex(
-                name: "IX_ExperimentReagents_ExperimentId",
-                table: "ExperimentReagents",
-                column: "ExperimentId");
+            // Crear índices (idempotente)
+            migrationBuilder.Sql(@"
+                CREATE INDEX IF NOT EXISTS ""IX_ExperimentReagents_ExperimentId"" ON ""ExperimentReagents"" (""ExperimentId"");");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_ExperimentReagents_ReagentId",
-                table: "ExperimentReagents",
-                column: "ReagentId");
+            migrationBuilder.Sql(@"
+                CREATE INDEX IF NOT EXISTS ""IX_ExperimentReagents_ReagentId"" ON ""ExperimentReagents"" (""ReagentId"");");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_ExperimentEquipment_EquipmentId",
-                table: "ExperimentEquipment",
-                column: "EquipmentId");
+            migrationBuilder.Sql(@"
+                CREATE INDEX IF NOT EXISTS ""IX_ExperimentEquipment_EquipmentId"" ON ""ExperimentEquipment"" (""EquipmentId"");");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_ExperimentEquipment_ExperimentId",
-                table: "ExperimentEquipment",
-                column: "ExperimentId");
+            migrationBuilder.Sql(@"
+                CREATE INDEX IF NOT EXISTS ""IX_ExperimentEquipment_ExperimentId"" ON ""ExperimentEquipment"" (""ExperimentId"");");
         }
 
         /// <inheritdoc />

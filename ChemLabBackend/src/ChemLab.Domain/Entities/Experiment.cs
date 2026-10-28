@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ChemLab.Domain.Enums;
 
 namespace ChemLab.Domain.Entities;
 
@@ -27,39 +28,3 @@ public class Experiment
     public bool IsActive { get; set; } = true;
 }
 
-public enum ExperimentStatus
-{
-    Planned = 0,
-    InProgress = 1,
-    Completed = 2,
-    Cancelled = 3,
-    Failed = 4
-}
-
-public class ExperimentReagent
-{
-    public Guid Id { get; set; }
-    public Guid ExperimentId { get; set; }
-    public virtual Experiment Experiment { get; set; } = null!;
-
-    public Guid ReagentId { get; set; }
-    public virtual Reagent Reagent { get; set; } = null!;
-
-    public decimal QuantityUsed { get; set; }
-    public string Unit { get; set; } = string.Empty;
-    public string? BatchNumber { get; set; }
-}
-
-public class ExperimentEquipment
-{
-    public Guid Id { get; set; }
-    public Guid ExperimentId { get; set; }
-    public virtual Experiment Experiment { get; set; } = null!;
-
-    public Guid EquipmentId { get; set; }
-    public virtual Equipment Equipment { get; set; } = null!;
-
-    public double? UsageHours { get; set; }
-    public string? CalibrationBefore { get; set; }
-    public string? CalibrationAfter { get; set; }
-}

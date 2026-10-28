@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ChemLab.Domain.Enums;
 
 namespace ChemLab.Domain.Entities;
 
@@ -27,45 +28,3 @@ public class Request
     public virtual ICollection<RequestItem> Items { get; set; } = new List<RequestItem>();
 }
 
-public enum RequestType
-{
-    Reagent = 0,
-    Equipment = 1,
-    Maintenance = 2,
-    Calibration = 3,
-    Other = 4
-}
-
-public enum RequestStatus
-{
-    Pending = 0,
-    Approved = 1,
-    Rejected = 2,
-    InProgress = 3,
-    Completed = 4,
-    Cancelled = 5
-}
-
-public enum RequestPriority
-{
-    Low = 0,
-    Medium = 1,
-    High = 2,
-    Urgent = 3
-}
-
-public class RequestItem
-{
-    public Guid Id { get; set; }
-    public Guid RequestId { get; set; }
-    public virtual Request Request { get; set; } = null!;
-
-    public string ItemName { get; set; } = string.Empty;
-    public string? CatalogNumber { get; set; }
-    public string? CasNumber { get; set; }
-    public decimal? Quantity { get; set; }
-    public string? Unit { get; set; }
-    public string? Specifications { get; set; }
-    public string? Supplier { get; set; }
-    public decimal? EstimatedPrice { get; set; }
-}

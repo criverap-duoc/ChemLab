@@ -205,7 +205,8 @@ public static class RequestEndpoints
 
     private static async Task<IResult> GetRequestById(
         Guid id,
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        HttpContext httpContext)
     {
         var request = await context.Requests
             .Include(r => r.RequestedBy)
@@ -215,6 +216,14 @@ public static class RequestEndpoints
 
         if (request is null)
             return Results.NotFound();
+
+        var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
+            return Results.Unauthorized();
+
+        // ADMIN ve todas las solicitudes; el resto solo las propias
+        if (!httpContext.User.IsInRole("ADMIN") && request.RequestedById != userId)
+            return Results.Forbid();
 
         return Results.Ok(new
         {
@@ -316,6 +325,10 @@ public static class RequestEndpoints
         if (!Guid.TryParse(userIdClaim, out var userId))
             return Results.Unauthorized();
 
+        var canApprove = httpContext.User.IsInRole("ADMIN") || httpContext.User.IsInRole("LAB_MANAGER");
+        if (!canApprove)
+            return Results.Forbid();
+
         var request = await context.Requests.FindAsync(id);
         if (request is null)
             return Results.NotFound();
@@ -344,6 +357,10 @@ public static class RequestEndpoints
         var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdClaim, out var userId))
             return Results.Unauthorized();
+
+        var canApprove = httpContext.User.IsInRole("ADMIN") || httpContext.User.IsInRole("LAB_MANAGER");
+        if (!canApprove)
+            return Results.Forbid();
 
         var request = await context.Requests.FindAsync(id);
         if (request is null)
@@ -389,11 +406,20 @@ public static class RequestEndpoints
 
     private static async Task<IResult> DeleteRequest(
         Guid id,
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        HttpContext httpContext)
     {
         var request = await context.Requests.FindAsync(id);
         if (request is null)
             return Results.NotFound();
+
+        var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
+            return Results.Unauthorized();
+
+        // ADMIN puede borrar cualquiera; el usuario solo las propias
+        if (!httpContext.User.IsInRole("ADMIN") && request.RequestedById != userId)
+            return Results.Forbid();
 
         context.Requests.Remove(request);
         await context.SaveChangesAsync();

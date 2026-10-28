@@ -91,6 +91,8 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
                 entity.Property(e => e.Protocol).HasMaxLength(4000);
                 entity.Property(e => e.Results).HasMaxLength(4000);
                 entity.Property(e => e.Status).HasConversion<int>();
+                entity.HasIndex(e => e.Status);
+                entity.HasIndex(e => new { e.CreatedById, e.IsActive });
 
                 entity.HasOne(e => e.CreatedBy)
                     .WithMany()
@@ -102,6 +104,9 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.QuantityUsed).HasPrecision(18, 4);
+            entity.Property(e => e.Unit).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.BatchNumber).HasMaxLength(100);
+            entity.HasIndex(e => new { e.ExperimentId, e.ReagentId });
 
             entity.HasOne(e => e.Experiment)
                 .WithMany(e => e.Reagents)
@@ -117,6 +122,9 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
         builder.Entity<ExperimentEquipment>(entity =>
         {
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.CalibrationBefore).HasMaxLength(200);
+            entity.Property(e => e.CalibrationAfter).HasMaxLength(200);
+            entity.HasIndex(e => new { e.ExperimentId, e.EquipmentId });
 
             entity.HasOne(e => e.Experiment)
                 .WithMany(e => e.Equipment)
@@ -136,6 +144,12 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
             entity.Property(e => e.Description).HasMaxLength(1000);
             entity.Property(e => e.Comments).HasMaxLength(500);
             entity.Property(e => e.RejectionReason).HasMaxLength(500);
+            entity.Property(e => e.Type).HasConversion<int>();
+            entity.Property(e => e.Status).HasConversion<int>();
+            entity.Property(e => e.Priority).HasConversion<int>();
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.RequestedAt);
+            entity.HasIndex(e => new { e.RequestedById, e.Status });
 
             entity.HasOne(e => e.RequestedBy)
                 .WithMany()
@@ -157,6 +171,7 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
             entity.Property(e => e.Unit).HasMaxLength(20);
             entity.Property(e => e.Specifications).HasMaxLength(500);
             entity.Property(e => e.Supplier).HasMaxLength(200);
+            entity.Property(e => e.Quantity).HasPrecision(18, 4);
             entity.Property(e => e.EstimatedPrice).HasPrecision(18, 2);
 
             entity.HasOne(e => e.Request)

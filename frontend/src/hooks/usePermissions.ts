@@ -40,6 +40,10 @@ export const usePermissions = () => {
     return user?.role === role;
   };
 
+  const canApproveRequests = (): boolean => {
+    return isAdmin() || hasRole('LAB_MANAGER');
+  };
+
   return {
     user,
     permissions,
@@ -48,6 +52,7 @@ export const usePermissions = () => {
     canAny,
     canAll,
     isAdmin,
-    hasRole
+    hasRole,
+    canApproveRequests
   };
 };

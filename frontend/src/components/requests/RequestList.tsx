@@ -54,7 +54,6 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { usePermissions } from '../../hooks/usePermissions';
-import { PERMISSIONS } from '../../types';
 import { PubChemSearch } from './PubChemSearch';
 
 // Definir tipo para los items del formulario
@@ -108,8 +107,7 @@ export const RequestList: React.FC = () => {
     }]
   });
 
-  const { isAdmin, can } = usePermissions();
-  const canApprove = isAdmin() || can(PERMISSIONS.MANAGE_USERS);
+  const { isAdmin, canApproveRequests } = usePermissions();
 
   useEffect(() => {
     loadRequests();
@@ -438,7 +436,7 @@ export const RequestList: React.FC = () => {
                   </Tooltip>
                 )}
 
-                {req.status === 'Pending' && canApprove && tabValue === 0 && (
+                {req.status === 'Pending' && canApproveRequests() && tabValue === 0 && (
                   <>
                     <Tooltip title="Aprobar">
                       <IconButton onClick={() => { setSelectedRequest(req); setOpenApproveDialog(true); }} color="success">

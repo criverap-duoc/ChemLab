@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using ChemLab.API.Hubs;
 using ChemLab.Domain.Entities;
+using ChemLab.Domain.Enums;
 using ChemLab.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -49,7 +50,7 @@ public class NotificationService : INotificationService
                 Data = data != null ? JsonSerializer.Serialize(data) : null
             };
 
-            _context.Notifications.Add(notification);
+            await _context.Notifications.AddAsync(notification);
             await _context.SaveChangesAsync();
         }
         catch (Exception ex)

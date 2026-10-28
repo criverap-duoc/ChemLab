@@ -36,6 +36,8 @@ public static class ExperimentEndpoints
         if (!Guid.TryParse(userIdClaim, out var userId))
             return Results.Unauthorized();
 
+        var isAdmin = httpContext.User.IsInRole("ADMIN");
+
         var query = context.Experiments
             .Include(e => e.CreatedBy)
             .Include(e => e.Reagents)
@@ -43,8 +45,11 @@ public static class ExperimentEndpoints
             .Include(e => e.Equipment)
                 .ThenInclude(eq => eq.Equipment)
             .Where(e => e.IsActive)
-            .Where(e => e.CreatedById == userId)  // <-- FILTRAR POR USUARIO
             .AsQueryable();
+
+        // ADMIN ve todos los experimentos; el resto solo los propios
+        if (!isAdmin)
+            query = query.Where(e => e.CreatedById == userId);
 
         if (status.HasValue)
             query = query.Where(e => e.Status == status);
@@ -86,7 +91,8 @@ public static class ExperimentEndpoints
 
     private static async Task<IResult> GetExperimentById(
         Guid id,
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        HttpContext httpContext)
     {
         var experiment = await context.Experiments
             .Include(e => e.CreatedBy)
@@ -98,6 +104,13 @@ public static class ExperimentEndpoints
 
         if (experiment is null)
             return Results.NotFound();
+
+        var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
+            return Results.Unauthorized();
+
+        if (!httpContext.User.IsInRole("ADMIN") && experiment.CreatedById != userId)
+            return Results.Forbid();
 
         return Results.Ok(new
         {
@@ -196,7 +209,8 @@ public static class ExperimentEndpoints
     private static async Task<IResult> UpdateExperiment(
         Guid id,
         [FromBody] UpdateExperimentDto dto,
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        HttpContext httpContext)
     {
         // Cargar el experimento con sus relaciones
         var experiment = await context.Experiments
@@ -206,6 +220,9 @@ public static class ExperimentEndpoints
 
         if (experiment is null)
             return Results.NotFound();
+
+        if (!CanModifyExperiment(experiment, httpContext))
+            return Results.Forbid();
 
         // Actualizar campos básicos
         experiment.Name = dto.Name ?? experiment.Name;
@@ -266,12 +283,18 @@ public static class ExperimentEndpoints
     private static async Task<IResult> UpdateStatus(
         Guid id,
         [FromBody] UpdateStatusDto dto,
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        HttpContext httpContext,
+        INotificationService notificationService)
     {
         var experiment = await context.Experiments.FindAsync(id);
         if (experiment is null || !experiment.IsActive)
             return Results.NotFound();
 
+        if (!CanModifyExperiment(experiment, httpContext))
+            return Results.Forbid();
+
+        var previousStatus = experiment.Status;
         experiment.Status = dto.Status;
         experiment.UpdatedAt = DateTime.UtcNow;
 
@@ -279,13 +302,19 @@ public static class ExperimentEndpoints
             experiment.EndDate = DateTime.UtcNow;
 
         await context.SaveChangesAsync();
+
+        // Notificar solo cuando el estado realmente cambió
+        if (previousStatus != experiment.Status)
+            await notificationService.NotifyExperimentStatusChanged(experiment);
+
         return Results.Ok(new { Message = "Status updated successfully" });
     }
 
     private static async Task<IResult> AddReagent(
         Guid id,
         [FromBody] AddReagentDto dto,
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        HttpContext httpContext)
     {
         var experiment = await context.Experiments
             .Include(e => e.Reagents)
@@ -293,6 +322,9 @@ public static class ExperimentEndpoints
 
         if (experiment is null)
             return Results.NotFound();
+
+        if (!CanModifyExperiment(experiment, httpContext))
+            return Results.Forbid();
 
         var reagent = await context.Reagents.FindAsync(dto.ReagentId);
         if (reagent is null)
@@ -325,7 +357,8 @@ public static class ExperimentEndpoints
     private static async Task<IResult> AddEquipment(
         Guid id,
         [FromBody] AddEquipmentDto dto,
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        HttpContext httpContext)
     {
         var experiment = await context.Experiments
             .Include(e => e.Equipment)
@@ -333,6 +366,9 @@ public static class ExperimentEndpoints
 
         if (experiment is null)
             return Results.NotFound();
+
+        if (!CanModifyExperiment(experiment, httpContext))
+            return Results.Forbid();
 
         var equipment = await context.Equipment.FindAsync(dto.EquipmentId);
         if (equipment is null)
@@ -360,17 +396,30 @@ public static class ExperimentEndpoints
 
     private static async Task<IResult> DeleteExperiment(
         Guid id,
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        HttpContext httpContext)
     {
         var experiment = await context.Experiments.FindAsync(id);
         if (experiment is null)
             return Results.NotFound();
+
+        if (!CanModifyExperiment(experiment, httpContext))
+            return Results.Forbid();
 
         experiment.IsActive = false;
         experiment.UpdatedAt = DateTime.UtcNow;
 
         await context.SaveChangesAsync();
         return Results.Ok(new { Message = "Experiment deleted successfully" });
+    }
+
+    private static bool CanModifyExperiment(Experiment experiment, HttpContext httpContext)
+    {
+        if (httpContext.User.IsInRole("ADMIN"))
+            return true;
+
+        var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return Guid.TryParse(userIdClaim, out var userId) && experiment.CreatedById == userId;
     }
 }
 

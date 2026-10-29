@@ -32,6 +32,10 @@ builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
     options.Password.RequireUppercase = true;
     options.Password.RequireLowercase = true;
 })
+// F6.5c: CRÍTICO - registrar el RoleStore de EF Core. Sin esta línea Identity
+// puede quedar con UserOnlyStore y GetRolesAsync() devuelve vacío.
+.AddRoles<IdentityRole<Guid>>()
+// Debe ir DESPUÉS de AddRoles para que el store se construya con el TRole correcto.
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 

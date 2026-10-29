@@ -38,6 +38,7 @@ public static class RequestEndpoints
         HttpContext httpContext,
         [FromQuery] RequestStatus? status = null,
         [FromQuery] RequestType? type = null,
+        [FromQuery] bool includeCancelled = true,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
@@ -51,8 +52,10 @@ public static class RequestEndpoints
             .Include(r => r.RequestedBy)
             .Include(r => r.ApprovedBy)
             .Include(r => r.Items)
-            .Where(r => r.Status != RequestStatus.Cancelled)
             .AsQueryable();
+
+        if (!includeCancelled)
+            query = query.Where(r => r.Status != RequestStatus.Cancelled);
 
         if (!isAdmin)
         {

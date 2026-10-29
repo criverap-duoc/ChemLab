@@ -1,6 +1,8 @@
 using ChemLab.Domain.Entities;
+using ChemLab.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ChemLab.API.Endpoints;
 
@@ -39,7 +41,7 @@ public static class AuthEndpoints
             return Results.BadRequest(result.Errors);
         });
 
-        group.MapPost("/login", async (LoginRequest request, SignInManager<User> signInManager, UserManager<User> userManager) =>
+        group.MapPost("/login", async (LoginRequest request, SignInManager<User> signInManager, UserManager<User> userManager, ApplicationDbContext context) =>
         {
             // Validar datos de entrada
             if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
@@ -53,23 +55,40 @@ public static class AuthEndpoints
                 if (user == null)
                     return Results.Unauthorized();
 
-                // 🔥 FORZAR LA RECARGA DEL USUARIO DESDE LA BD
-                await userManager.UpdateSecurityStampAsync(user);
+                // F6.5f: los roles se leen con SQL CRUDO sobre la MISMA conexión de EF Core.
+                // No pasan por Identity/UserManager ni por la cookie, así se distingue
+                // "la BD no tiene la fila" de "Identity no la ve".
+                // OJO EF Core 8: SqlQueryRaw<T> escalar exige que la columna se llame "Value".
+                var userId = user.Id;
+                List<string> roleNames;
+                try
+                {
+                    roleNames = await context.Database
+                        .SqlQueryRaw<string>(
+                            "SELECT r.Name AS Value FROM AspNetUserRoles ur " +
+                            "JOIN AspNetRoles r ON ur.RoleId = r.Id " +
+                            "WHERE LOWER(ur.UserId) = LOWER({0})", userId)
+                        .ToListAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[LOGIN-SQL] Error ejecutando SQL crudo: {ex.Message}");
+                    roleNames = new List<string>();
+                }
 
-                // Volver a firmar al usuario con los claims actualizados
+                Console.WriteLine($"[LOGIN-SQL] Roles encontrados: [{string.Join(",", roleNames)}]");
+
+                // Solo diagnóstico: qué responde Identity para el mismo usuario.
+                var identityRoles = await userManager.GetRolesAsync(user);
+                Console.WriteLine($"[LOGIN-SQL] Identity devuelve: [{string.Join(",", identityRoles)}] (count={identityRoles.Count})");
+
+                // Refrescar el security stamp y re-firmar con los claims actualizados
+                // (se mantiene igual que antes: no forma parte del bloque de roles).
+                await userManager.UpdateSecurityStampAsync(user);
                 await signInManager.SignOutAsync();
                 await signInManager.SignInAsync(user, isPersistent: false);
 
-                // Obtener roles actualizados
-                var roles = await userManager.GetRolesAsync(user);
-
-                Console.WriteLine($"========== LOGIN DEBUG ==========");
-                Console.WriteLine($"Usuario: {user.Email}");
-                Console.WriteLine($"Roles encontrados en BD: {string.Join(", ", roles)}");
-                Console.WriteLine($"==================================");
-
-                // Determinar el rol (usar el de BD o forzar por email)
-                string userRole = roles.FirstOrDefault() ?? "RESEARCHER";
+                var assignedRole = roleNames.FirstOrDefault() ?? "RESEARCHER";
 
                 return Results.Ok(new
                 {
@@ -80,7 +99,7 @@ public static class AuthEndpoints
                         user.Email,
                         user.FirstName,
                         user.LastName,
-                        Role = userRole,
+                        Role = assignedRole,
                         user.CreatedAt
                     }
                 });

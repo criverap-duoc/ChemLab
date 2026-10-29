@@ -6,6 +6,7 @@ using ChemLab.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ChemLab.API.Services;
+using System.Security.Claims;
 
 namespace ChemLab.API.Endpoints;
 
@@ -42,8 +43,21 @@ public static class ReagentsEndpoints
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        var reagents = await context.Reagents
+        var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
+            return Results.Unauthorized();
+
+        // ADMIN y LAB_MANAGER ven todo el inventario; RESEARCHER y LAB_TECH solo lo propio
+        var canViewAll = httpContext.User.IsInRole("ADMIN") || httpContext.User.IsInRole("LAB_MANAGER");
+
+        var query = context.Reagents
             .Where(r => r.IsActive)
+            .AsQueryable();
+
+        if (!canViewAll)
+            query = query.Where(r => r.CreatedById == userId);
+
+        var reagents = await query
             .Include(r => r.CreatedBy)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -64,7 +78,7 @@ public static class ReagentsEndpoints
             })
             .ToListAsync();
 
-        var totalCount = await context.Reagents.CountAsync(r => r.IsActive);
+        var totalCount = await query.CountAsync();
 
         return Results.Ok(new
         {

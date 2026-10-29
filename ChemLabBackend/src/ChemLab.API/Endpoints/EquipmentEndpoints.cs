@@ -47,9 +47,17 @@ public static class EquipmentEndpoints
         if (!Guid.TryParse(userIdClaim, out var userId))
             return Results.Unauthorized();
 
-        var equipment = await context.Equipment
+        // ADMIN y LAB_MANAGER ven todo el inventario; RESEARCHER y LAB_TECH solo lo propio
+        var canViewAll = httpContext.User.IsInRole("ADMIN") || httpContext.User.IsInRole("LAB_MANAGER");
+
+        var query = context.Equipment
             .Where(e => e.IsActive)
-            .Where(e => e.CreatedById == userId)  // <-- FILTRAR POR USUARIO
+            .AsQueryable();
+
+        if (!canViewAll)
+            query = query.Where(e => e.CreatedById == userId);
+
+        var equipment = await query
             .Include(e => e.CreatedBy)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -68,9 +76,7 @@ public static class EquipmentEndpoints
             })
             .ToListAsync();
 
-        var totalCount = await context.Equipment
-            .Where(e => e.IsActive && e.CreatedById == userId)  // <-- FILTRAR EN COUNT
-            .CountAsync();
+        var totalCount = await query.CountAsync();
 
         return Results.Ok(new
         {

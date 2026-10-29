@@ -86,6 +86,15 @@ builder.Services.AddHostedService<NotificationBackgroundService>();
 
 var app = builder.Build();
 
+// F6.5g: Exponer el ContentRoot a la configuración para que Infrastructure pueda
+// resolver la ruta relativa de la BD contra la raíz REAL de la aplicación
+// (src\ChemLab.API en `dotnet run`, carpeta de publish en deploy), en lugar del
+// CWD del proceso (bin\Debug\net8.0). builder.Configuration es un
+// ConfigurationManager (IConfigurationRoot), así que el indexer admite escritura.
+// Se lee de forma diferida cuando EF construye el DbContext, por eso basta con
+// asignarlo aquí (antes de que se resuelva cualquier DbContext).
+builder.Configuration["ContentRoot"] = app.Environment.ContentRootPath;
+
 // Configure pipeline
 if (app.Environment.IsDevelopment())
 {

@@ -56,8 +56,8 @@ public static class AuthEndpoints
                     return Results.Unauthorized();
 
                 // F6.5f: los roles se leen con SQL CRUDO sobre la MISMA conexión de EF Core.
-                // No pasan por Identity/UserManager ni por la cookie, así se distingue
-                // "la BD no tiene la fila" de "Identity no la ve".
+                // Identity/UserManager.GetRolesAsync() devolvía vacío con este modelo
+                // (Guid + converter), así que el rol se resuelve aquí directamente.
                 // OJO EF Core 8: SqlQueryRaw<T> escalar exige que la columna se llame "Value".
                 var userId = user.Id;
                 List<string> roleNames;
@@ -70,17 +70,11 @@ public static class AuthEndpoints
                             "WHERE LOWER(ur.UserId) = LOWER({0})", userId)
                         .ToListAsync();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    Console.WriteLine($"[LOGIN-SQL] Error ejecutando SQL crudo: {ex.Message}");
+                    // Fallback: si el SQL falla, el usuario entra como RESEARCHER.
                     roleNames = new List<string>();
                 }
-
-                Console.WriteLine($"[LOGIN-SQL] Roles encontrados: [{string.Join(",", roleNames)}]");
-
-                // Solo diagnóstico: qué responde Identity para el mismo usuario.
-                var identityRoles = await userManager.GetRolesAsync(user);
-                Console.WriteLine($"[LOGIN-SQL] Identity devuelve: [{string.Join(",", identityRoles)}] (count={identityRoles.Count})");
 
                 // Refrescar el security stamp y re-firmar con los claims actualizados
                 // (se mantiene igual que antes: no forma parte del bloque de roles).

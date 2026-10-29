@@ -11,3 +11,4 @@ bin/
 obj/
 .env
 cookies.txt
+Run dotnet.txt

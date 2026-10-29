@@ -5,6 +5,7 @@ using ChemLab.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ChemLab.Infrastructure.Data;
 
@@ -27,6 +28,18 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        // F6.5j: forzar Guid → string minúsculas (alineado con Identity)
+        foreach (var entityType in builder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(Guid) || property.ClrType == typeof(Guid?))
+                {
+                    property.SetValueConverter(new GuidToStringConverter());
+                }
+            }
+        }
 
         // Configuración de User
         builder.Entity<User>(entity =>

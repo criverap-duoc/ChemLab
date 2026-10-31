@@ -17,16 +17,72 @@ namespace ChemLab.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.6");
 
+            modelBuilder.Entity("ChemLab.Domain.Entities.AuditLog", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NewValue")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OldValue")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Timestamp");
+
+                    b.HasIndex("EntityType", "EntityId");
+
+                    b.ToTable("AuditLogs");
+                });
+
             modelBuilder.Entity("ChemLab.Domain.Entities.Equipment", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("CreatedById")
+                    b.Property<string>("CreatedById")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
@@ -67,19 +123,20 @@ namespace ChemLab.Infrastructure.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("Equipment", (string)null);
+                    b.ToTable("Equipment");
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.Experiment", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("CreatedById")
+                    b.Property<string>("CreatedById")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
@@ -120,27 +177,33 @@ namespace ChemLab.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedById");
+                    b.HasIndex("Status");
 
-                    b.ToTable("Experiments", (string)null);
+                    b.HasIndex("CreatedById", "IsActive");
+
+                    b.ToTable("Experiments");
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.ExperimentEquipment", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("CalibrationAfter")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("CalibrationBefore")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("EquipmentId")
+                    b.Property<string>("EquipmentId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("ExperimentId")
+                    b.Property<string>("ExperimentId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<double?>("UsageHours")
@@ -150,46 +213,50 @@ namespace ChemLab.Infrastructure.Migrations
 
                     b.HasIndex("EquipmentId");
 
-                    b.HasIndex("ExperimentId");
+                    b.HasIndex("ExperimentId", "EquipmentId");
 
-                    b.ToTable("ExperimentEquipment", (string)null);
+                    b.ToTable("ExperimentEquipment");
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.ExperimentReagent", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("BatchNumber")
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("ExperimentId")
+                    b.Property<string>("ExperimentId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("QuantityUsed")
                         .HasPrecision(18, 4)
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("ReagentId")
+                    b.Property<string>("ReagentId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Unit")
                         .IsRequired()
+                        .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ExperimentId");
-
                     b.HasIndex("ReagentId");
 
-                    b.ToTable("ExperimentReagents", (string)null);
+                    b.HasIndex("ExperimentId", "ReagentId");
+
+                    b.ToTable("ExperimentReagents");
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.Notification", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
@@ -217,7 +284,8 @@ namespace ChemLab.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -228,12 +296,12 @@ namespace ChemLab.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.Reagent", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
@@ -249,7 +317,8 @@ namespace ChemLab.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("CreatedById")
+                    b.Property<string>("CreatedById")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("ExpiryDate")
@@ -295,16 +364,16 @@ namespace ChemLab.Infrastructure.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("Reagents", (string)null);
+                    b.ToTable("Reagents");
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.Request", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("ApprovedById")
+                    b.Property<string>("ApprovedById")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Comments")
@@ -329,7 +398,8 @@ namespace ChemLab.Infrastructure.Migrations
                     b.Property<DateTime>("RequestedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("RequestedById")
+                    b.Property<string>("RequestedById")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("ResolvedAt")
@@ -350,14 +420,18 @@ namespace ChemLab.Infrastructure.Migrations
 
                     b.HasIndex("ApprovedById");
 
-                    b.HasIndex("RequestedById");
+                    b.HasIndex("RequestedAt");
 
-                    b.ToTable("Requests", (string)null);
+                    b.HasIndex("Status");
+
+                    b.HasIndex("RequestedById", "Status");
+
+                    b.ToTable("Requests");
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.RequestItem", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
@@ -379,9 +453,11 @@ namespace ChemLab.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<decimal?>("Quantity")
+                        .HasPrecision(18, 4)
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("RequestId")
+                    b.Property<string>("RequestId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Specifications")
@@ -400,12 +476,12 @@ namespace ChemLab.Infrastructure.Migrations
 
                     b.HasIndex("RequestId");
 
-                    b.ToTable("RequestItems", (string)null);
+                    b.ToTable("RequestItems");
                 });
 
             modelBuilder.Entity("ChemLab.Domain.Entities.User", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
@@ -489,7 +565,7 @@ namespace ChemLab.Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
@@ -526,7 +602,8 @@ namespace ChemLab.Infrastructure.Migrations
                     b.Property<string>("ClaimValue")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("RoleId")
+                    b.Property<string>("RoleId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -548,7 +625,8 @@ namespace ChemLab.Infrastructure.Migrations
                     b.Property<string>("ClaimValue")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -569,7 +647,8 @@ namespace ChemLab.Infrastructure.Migrations
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("LoginProvider", "ProviderKey");
@@ -581,10 +660,10 @@ namespace ChemLab.Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
                 {
-                    b.Property<Guid>("UserId")
+                    b.Property<string>("UserId")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("RoleId")
+                    b.Property<string>("RoleId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("UserId", "RoleId");
@@ -596,7 +675,7 @@ namespace ChemLab.Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
                 {
-                    b.Property<Guid>("UserId")
+                    b.Property<string>("UserId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("LoginProvider")

@@ -1,8 +1,13 @@
 // src\services\api.ts
 import axios from 'axios';
 
+// F7b: URL absoluta del backend. Con baseURL relativa ('/api') el dev-server de
+// CRA hacía de proxy y la cookie de sesión no viajaba correctamente.
+// Exportamos el host para reutilizarlo en SignalR (notificationService.ts).
+export const API_BASE_URL = 'http://localhost:5000';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: `${API_BASE_URL}/api`,
   withCredentials: true,
   timeout: 10000,
 });

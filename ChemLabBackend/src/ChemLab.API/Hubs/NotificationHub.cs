@@ -32,4 +32,14 @@ public class NotificationHub : Hub
         Console.WriteLine($"❌ Usuario {userId ?? "desconocido"} desconectado");
         await base.OnDisconnectedAsync(exception);
     }
+
+    /// <summary>
+    /// F7c: el frontend invoca "MarkAsRead" desde notificationService.markAsRead().
+    /// La persistencia en BD ya la hace POST /api/notifications/mark-read/{id}; aquí
+    /// solo se confirma al llamador para que actualice su estado local.
+    /// </summary>
+    public async Task MarkAsRead(string notificationId)
+    {
+        await Clients.Caller.SendAsync("NotificationRead", notificationId);
+    }
 }

@@ -86,6 +86,13 @@ export const NotificationBell: React.FC = () => {
     console.log('📊 No leídas:', unreadCount);
   }, [notifications, unreadCount]);
 
+  // F7c: el backend puede entregar notificaciones duplicadas (mismo id). Se
+  // deduplica antes de renderizar para no repetir keys en el List de MUI.
+  const uniqueNotifications = notifications.filter(
+    (notification, index, list) =>
+      list.findIndex(n => n.id === notification.id) === index
+  );
+
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -173,7 +180,8 @@ export const NotificationBell: React.FC = () => {
       <IconButton
         color="inherit"
         onClick={handleClick}
-        size="large"
+        size="medium"
+        aria-label="notificaciones"
       >
         <Badge badgeContent={unreadCount} color="error">
           <NotificationsIcon />
@@ -186,8 +194,8 @@ export const NotificationBell: React.FC = () => {
         onClose={handleClose}
         PaperProps={{
           sx: {
-            width: 380,
-            maxHeight: 500,
+            width: { xs: 'calc(100vw - 24px)', sm: 380 },
+            maxHeight: { xs: '70vh', sm: 500 },
             mt: 1.5,
           }
         }}
@@ -216,7 +224,7 @@ export const NotificationBell: React.FC = () => {
 
         <Divider />
 
-        {notifications.length === 0 ? (
+        {uniqueNotifications.length === 0 ? (
           <MenuItem disabled sx={{ justifyContent: 'center', py: 4, flexDirection: 'column' }}>
             <NotificationsIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
             <Typography variant="body2" color="textSecondary">
@@ -225,9 +233,9 @@ export const NotificationBell: React.FC = () => {
           </MenuItem>
         ) : (
           <List sx={{ p: 0 }}>
-            {notifications.slice(0, 10).map((notification) => (
+            {uniqueNotifications.slice(0, 10).map((notification, index) => (
               <ListItem
-                key={notification.id}
+                key={`${notification.id}-${index}`}
                 button
                 onClick={() => handleNotificationClick(notification)}
                 sx={{
@@ -266,10 +274,10 @@ export const NotificationBell: React.FC = () => {
                 )}
               </ListItem>
             ))}
-            {notifications.length > 10 && (
+            {uniqueNotifications.length > 10 && (
               <Box sx={{ p: 1, textAlign: 'center' }}>
                 <Typography variant="caption" color="textSecondary">
-                  +{notifications.length - 10} notificaciones más
+                  +{uniqueNotifications.length - 10} notificaciones más
                 </Typography>
               </Box>
             )}

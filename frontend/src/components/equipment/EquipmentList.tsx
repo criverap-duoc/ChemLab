@@ -28,7 +28,7 @@ import {
   Build as BuildIcon,
 } from '@mui/icons-material';
 import { equipmentService } from '../../services/equipmentService';
-import { Equipment, EquipmentStatus, StatusColors, CreateEquipmentDto } from '../../types';
+import { Equipment, EquipmentStatus, StatusColors, CreateEquipmentDto, normalizeEquipmentStatus } from '../../types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -53,7 +53,8 @@ export const EquipmentList: React.FC = () => {
 
   const loadEquipment = async () => {
     const data = await equipmentService.getAll();
-    setEquipment(data.data);
+    // El backend serializa el enum como texto ("Available", "InUse"...); se normaliza a número.
+    setEquipment(data.data.map(eq => ({ ...eq, status: normalizeEquipmentStatus(eq.status) })));
   };
 
   const handleOpenDialog = (eq?: Equipment) => {

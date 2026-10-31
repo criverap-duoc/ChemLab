@@ -319,7 +319,7 @@ export const ExperimentList: React.FC = () => {
             : exp.status;
 
           return (
-            <Grid item xs={12} md={6} lg={4} key={exp.id}>
+            <Grid item xs={12} sm={6} lg={4} key={exp.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>

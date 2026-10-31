@@ -1,6 +1,6 @@
 import * as signalR from '@microsoft/signalr';
 import { authService } from './authService';
-import api from './api';  // <-- IMPORTANTE: agregar este import
+import api, { API_BASE_URL } from './api';  // <-- IMPORTANTE: agregar este import
 
 export interface Notification {
   id: string;
@@ -41,15 +41,30 @@ class NotificationService {
   // ===== EL NUEVO MÉTODO VA AQUÍ =====
   async loadUnreadNotifications() {
     try {
-      const response = await api.get('/notifications/unread');
-      const unread = response.data;
+      const response = await api.get<any[]>('/notifications/unread');
+      const unread = response.data ?? [];
 
-      if (unread && unread.length > 0) {
+      if (unread.length > 0) {
         console.log('📥 Cargando notificaciones no leídas:', unread.length);
 
-        // Filtrar para no duplicar
+        // El backend devuelve `isRead`; el frontend usa `read`.
+        const normalize = (n: any): Notification => ({
+          ...n,
+          read: n.read ?? n.isRead ?? false,
+        });
+
+        // Sincronizar el estado de las que ya tenemos en memoria (evita "fantasmas")
+        const unreadById = new Map(unread.map((n: any) => [n.id, n]));
+        this.notifications = this.notifications.map(existing => {
+          const fresh = unreadById.get(existing.id);
+          return fresh ? normalize(fresh) : existing;
+        });
+
+        // Agregar solo las nuevas para no duplicar
         const existingIds = new Set(this.notifications.map(n => n.id));
-        const newNotifications = unread.filter((n: any) => !existingIds.has(n.id));
+        const newNotifications = unread
+          .filter((n: any) => !existingIds.has(n.id))
+          .map(normalize);
 
         this.notifications = [...newNotifications, ...this.notifications];
         this.saveNotifications();
@@ -70,7 +85,9 @@ class NotificationService {
     if (!user) return;
 
     this.connection = new signalR.HubConnectionBuilder()
-      .withUrl('http://localhost:5000/hubs/notifications', {
+      // F7b: misma base que axios; withCredentials envía la cookie de sesión
+      // en el negotiate y en la conexión del hub.
+      .withUrl(`${API_BASE_URL}/hubs/notifications`, {
         withCredentials: true
       })
       .withAutomaticReconnect()
@@ -146,7 +163,13 @@ class NotificationService {
       }
 
       if (this.isConnected && this.connection) {
-        await this.connection.invoke('MarkAsRead', notificationId);
+        try {
+          await this.connection.invoke('MarkAsRead', notificationId);
+        } catch (error) {
+          // F7c: el hub ya expone MarkAsRead; si la conexión se cayó entre el
+          // check y el invoke, no debe romper el click del usuario.
+          console.error('Error invoking MarkAsRead on hub:', error);
+        }
       }
     }
   }

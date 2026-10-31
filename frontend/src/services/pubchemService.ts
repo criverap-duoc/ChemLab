@@ -29,50 +29,71 @@ export const pubchemService = {
   // Buscar por nombre con mejor manejo de errores
   async searchByName(query: string): Promise<PubChemSearchResult[]> {
     try {
-      if (query.length < 3) return [];
+      const term = query.trim();
+      if (term.length < 3) return [];
 
-      console.log(`Buscando en PubChem: "${query}"`);
+      console.log(`Buscando en PubChem: "${term}"`);
 
-      const nameResponse = await pubchemApi.get(
-        `/compound/name/${encodeURIComponent(query)}/cids/JSON`
-      ).catch(error => {
-        if (error.response?.status === 404) {
-          console.log(`"${query}" no encontrado exactamente, probando búsqueda por similitud...`);
-          return this.autocompleteSearch(query);
+      let cids = await this.fetchCids(term);
+
+      // F7c: nombres como "sulfuric acid (H2O4S)" no existen en PubChem y dan 404.
+      // Se reintenta con la parte anterior al paréntesis antes de ir a autocompletado.
+      if (cids.length === 0 && term.includes('(')) {
+        const withoutParentheses = term
+          .replace(/\s*\([^)]*\)/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        if (withoutParentheses.length >= 3 && withoutParentheses !== term) {
+          console.log(`"${term}" no encontrado, probando sin paréntesis: "${withoutParentheses}"`);
+          cids = await this.fetchCids(withoutParentheses);
         }
-        throw error;
-      });
-
-      if (Array.isArray(nameResponse)) {
-        return nameResponse;
       }
 
-      const cids = nameResponse.data?.IdentifierList?.CID;
-
-      if (!cids || cids.length === 0) {
-        return [];
+      if (cids.length === 0) {
+        console.log(`"${term}" no encontrado exactamente, probando búsqueda por similitud...`);
+        return this.autocompleteSearch(term);
       }
 
-      const topCids = cids.slice(0, 5);
-
-      const detailsResponse = await pubchemApi.get(
-        `/compound/cid/${topCids.join(',')}/property/IUPACName,MolecularFormula,MolecularWeight/JSON`
-      );
-
-      const properties = detailsResponse.data?.PropertyTable?.Properties || [];
-
-      return properties.map((prop: any) => ({
-        cid: prop.CID,
-        name: prop.IUPACName || `Compound CID ${prop.CID}`,
-        formula: prop.MolecularFormula || '',
-        molecularWeight: prop.MolecularWeight ? parseFloat(prop.MolecularWeight) : undefined,
-        iupacName: prop.IUPACName
-      }));
+      return this.getProperties(cids.slice(0, 5));
 
     } catch (error) {
       console.error('Error searching PubChem by name:', error);
       return [];
     }
+  },
+
+  // F7c: helper interno. Devuelve [] en 404 en lugar de lanzar.
+  async fetchCids(term: string): Promise<number[]> {
+    try {
+      const response = await pubchemApi.get(
+        `/compound/name/${encodeURIComponent(term)}/cids/JSON`
+      );
+      const cids = response.data?.IdentifierList?.CID;
+      return Array.isArray(cids) ? cids : [];
+    } catch (error: any) {
+      if (error?.response?.status === 404) return [];
+      throw error;
+    }
+  },
+
+  // F7c: helper interno. Trae propiedades de los CIDs indicados.
+  async getProperties(cids: number[]): Promise<PubChemSearchResult[]> {
+    if (cids.length === 0) return [];
+
+    const detailsResponse = await pubchemApi.get(
+      `/compound/cid/${cids.join(',')}/property/IUPACName,MolecularFormula,MolecularWeight/JSON`
+    );
+
+    const properties = detailsResponse.data?.PropertyTable?.Properties || [];
+
+    return properties.map((prop: any) => ({
+      cid: prop.CID,
+      name: prop.IUPACName || `Compound CID ${prop.CID}`,
+      formula: prop.MolecularFormula || '',
+      molecularWeight: prop.MolecularWeight ? parseFloat(prop.MolecularWeight) : undefined,
+      iupacName: prop.IUPACName
+    }));
   },
 
   // Búsqueda por autocompletado

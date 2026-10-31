@@ -23,7 +23,8 @@ import {
   Timeline as TimelineIcon,
   Download as DownloadIcon,
 } from '@mui/icons-material';
-import { reportService } from '../../services/reportService';
+import { reportService, formatExperimentStatus } from '../../services/reportService';
+import { EquipmentStatus, normalizeEquipmentStatus } from '../../types';
 import { reagentService } from '../../services/reagentService';
 import { equipmentService } from '../../services/equipmentService';
 import { experimentService } from '../../services/experimentService';
@@ -82,10 +83,7 @@ export const ReportsDashboard: React.FC = () => {
       Modelo: e.model,
       'Número de Serie': e.serialNumber || 'N/A',
       Ubicación: e.location,
-      Estado: e.status === 0 ? 'Disponible' :
-              e.status === 1 ? 'En uso' :
-              e.status === 2 ? 'Mantenimiento' :
-              e.status === 3 ? 'Calibración pendiente' : 'Fuera de servicio',
+      Estado: EquipmentStatus[normalizeEquipmentStatus(e.status)],
       'Última Calibración': e.lastCalibration ? new Date(e.lastCalibration).toLocaleDateString() : 'N/A',
       'Próxima Calibración': e.nextCalibration ? new Date(e.nextCalibration).toLocaleDateString() : 'N/A',
       'Creado por': e.createdBy
@@ -97,10 +95,7 @@ export const ReportsDashboard: React.FC = () => {
     const data = experiments.map(e => ({
       Nombre: e.name,
       Descripción: e.description,
-      Estado: e.status === 0 ? 'Planificado' :
-              e.status === 1 ? 'En progreso' :
-              e.status === 2 ? 'Completado' :
-              e.status === 3 ? 'Cancelado' : 'Fallido',
+      Estado: formatExperimentStatus(e.status),
       'Fecha Inicio': new Date(e.startDate).toLocaleDateString(),
       'Fecha Fin': e.endDate ? new Date(e.endDate).toLocaleDateString() : 'En curso',
       'Reactivos Usados': e.reagentsCount || 0,

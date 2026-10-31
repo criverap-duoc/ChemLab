@@ -37,7 +37,7 @@ import {
   History as HistoryIcon,
 } from '@mui/icons-material';
 import { reagentService } from '../../services/reagentService';
-import { Reagent, CreateReagentDto } from '../../types';
+import { Reagent, CreateReagentDto, normalizeHazardLevel } from '../../types';
 import { EntityHistory } from '../traceability/EntityHistory';
 import { pubchemService, PubChemData } from '../../services/pubchemService';
 
@@ -80,7 +80,8 @@ export const ReagentList: React.FC = () => {
 
   const loadReagents = useCallback(async () => {
     const data = await reagentService.getAll();
-    let filtered = data.data;
+    // El backend serializa HazardLevel como texto ("Low", "High"...); se normaliza a número.
+    let filtered = data.data.map(r => ({ ...r, hazardLevel: normalizeHazardLevel(r.hazardLevel) }));
 
     // Filtrar por búsqueda
     if (searchTerm) {

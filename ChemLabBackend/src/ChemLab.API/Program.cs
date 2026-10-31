@@ -40,8 +40,27 @@ builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
 .AddDefaultTokenProviders();
 
 // Configurar autenticación COOKIES para API (evitar redirecciones)
+// F7b: frontend (localhost:3000) y API (localhost:5000) son el MISMO sitio pero
+// distinto origen. En dev no hay HTTPS, así que la cookie debe poder viajar por
+// http con SameSite=Lax (los puertos no cuentan para "same-site").
 builder.Services.ConfigureApplicationCookie(options =>
 {
+    options.Cookie.Name = ".AspNetCore.Identity.Application";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.Path = "/";
+
+    if (builder.Environment.IsDevelopment())
+    {
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+    }
+    else
+    {
+        // Producción (frontend y API en dominios distintos): cookie cross-site.
+        options.Cookie.SameSite = SameSiteMode.None;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    }
+
     options.Events = new CookieAuthenticationEvents
     {
         OnRedirectToLogin = context =>
@@ -147,5 +166,6 @@ app.MapHub<NotificationHub>("/hubs/notifications");
 app.MapTestEndpoints();
 app.MapDebugEndpoints();
 app.MapNotificationEndpoints();
+app.MapTraceabilityEndpoints();
 
 app.Run();

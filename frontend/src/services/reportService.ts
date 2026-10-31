@@ -1,12 +1,31 @@
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Reagent } from '../types';
-import { Equipment } from '../types';
+import { Reagent, Equipment, EquipmentStatus, normalizeEquipmentStatus } from '../types';
 import { Experiment } from '../types/experiment';
 
 // @ts-ignore - Ignorar errores de tipos para file-saver
 import { saveAs } from 'file-saver';
+
+// El backend serializa el enum como texto ("Completed", "InProgress"...).
+// Se acepta también el valor numérico del enum local (0-4).
+const EXPERIMENT_STATUS_LABELS: Record<string, string> = {
+  Planned: 'Planificado',
+  InProgress: 'En progreso',
+  Completed: 'Completado',
+  Cancelled: 'Cancelado',
+  Failed: 'Fallido',
+  '0': 'Planificado',
+  '1': 'En progreso',
+  '2': 'Completado',
+  '3': 'Cancelado',
+  '4': 'Fallido',
+};
+
+export const formatExperimentStatus = (status: unknown): string => {
+  if (status === null || status === undefined) return 'Desconocido';
+  return EXPERIMENT_STATUS_LABELS[String(status)] ?? String(status);
+};
 
 export const reportService = {
   // Exportar a Excel
@@ -69,10 +88,7 @@ export const reportService = {
       e.name,
       e.model,
       e.location,
-      e.status === 0 ? 'Disponible' :
-      e.status === 1 ? 'En uso' :
-      e.status === 2 ? 'Mantenimiento' :
-      e.status === 3 ? 'Calibración pendiente' : 'Fuera de servicio',
+      EquipmentStatus[normalizeEquipmentStatus(e.status)],
       e.nextCalibration ? new Date(e.nextCalibration).toLocaleDateString() : 'No programada'
     ]);
 
@@ -101,10 +117,7 @@ export const reportService = {
     const tableColumn = ['Nombre', 'Estado', 'Fecha Inicio', 'Reactivos', 'Equipos'];
     const tableRows = experiments.map(e => [
       e.name.substring(0, 40),
-      e.status === 0 ? 'Planificado' :
-      e.status === 1 ? 'En progreso' :
-      e.status === 2 ? 'Completado' :
-      e.status === 3 ? 'Cancelado' : 'Fallido',
+      formatExperimentStatus(e.status),
       new Date(e.startDate).toLocaleDateString(),
       (e.reagents?.length || 0).toString(),
       (e.equipment?.length || 0).toString()
@@ -144,7 +157,7 @@ export const reportService = {
     doc.text(`Total Reactivos: ${reagents.length}`, 20, 65);
     doc.text(`Total Equipos: ${equipment.length}`, 20, 72);
 
-    const lowStock = reagents.filter(r => r.quantity < 100).length;
+    const lowStock = reagents.filter(r => r.quantity <= r.minQuantity).length;
     const expiringSoon = reagents.filter(r => r.expiryDate && new Date(r.expiryDate) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)).length;
     const calibrationDue = equipment.filter(e => e.nextCalibration && new Date(e.nextCalibration) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)).length;
 
@@ -163,10 +176,7 @@ export const reportService = {
       const expColumn = ['Nombre', 'Estado', 'Fecha'];
       const expRows = experiments.slice(0, 8).map(e => [
         e.name.substring(0, 35),
-        e.status === 0 ? 'Planificado' :
-        e.status === 1 ? 'En progreso' :
-        e.status === 2 ? 'Completado' :
-        e.status === 3 ? 'Cancelado' : 'Fallido',
+        formatExperimentStatus(e.status),
         new Date(e.startDate).toLocaleDateString()
       ]);
 

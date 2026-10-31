@@ -211,22 +211,58 @@ export const RequestList: React.FC = () => {
   };
 
   const handleAddItem = () => {
-    setFormData({
-      ...formData,
-      items: [...formData.items, { itemName: '', quantity: undefined, unit: '' }]
-    });
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, { itemName: '', quantity: undefined, unit: '' }]
+    }));
   };
 
   const handleRemoveItem = (index: number) => {
-    const newItems = [...formData.items];
-    newItems.splice(index, 1);
-    setFormData({ ...formData, items: newItems });
+    setFormData(prev => {
+      const items = [...prev.items];
+      items.splice(index, 1);
+      return { ...prev, items };
+    });
   };
 
+  // F7c: actualización FUNCIONAL del estado. Antes se leía `formData` del closure,
+  // así que varias llamadas seguidas (autocompletado de PubChem) partían del mismo
+  // estado y se pisaban: solo persistía el último campo.
   const handleItemChange = (index: number, field: keyof RequestFormItem, value: any) => {
-    const newItems = [...formData.items];
-    newItems[index] = { ...newItems[index], [field]: value };
-    setFormData({ ...formData, items: newItems });
+    setFormData(prev => {
+      const items = [...prev.items];
+      items[index] = { ...items[index], [field]: value };
+      return { ...prev, items };
+    });
+  };
+
+  // F7c: autocompleta el ítem desde un resultado de PubChem en una sola actualización
+  // (nombre editable, CID en CAS/Catálogo y fórmula en Especificaciones).
+  const handlePubChemSelect = (index: number, result: any) => {
+    const compoundName: string =
+      result?.name || (result?.label ? result.label.split(' (')[0] : '');
+
+    setFormData(prev => {
+      const items = [...prev.items];
+      const current = items[index] ?? {
+        itemName: '',
+        quantity: undefined,
+        unit: '',
+        catalogNumber: '',
+        specifications: '',
+        supplier: '',
+        estimatedPrice: undefined
+      };
+
+      items[index] = {
+        ...current,
+        itemName: compoundName || current.itemName,
+        catalogNumber: result?.cid ? `CID:${result.cid}` : current.catalogNumber,
+        specifications: result?.formula ? `Fórmula: ${result.formula}` : current.specifications
+      };
+
+      return { ...prev, items };
+    });
   };
 
   const getStatusChip = (status: RequestStatus) => (
@@ -374,7 +410,7 @@ export const RequestList: React.FC = () => {
       {/* Grid de solicitudes */}
       <Grid container spacing={3}>
         {filteredRequests.map((req) => (
-          <Grid item xs={12} md={6} lg={4} key={req.id}>
+          <Grid item xs={12} sm={6} lg={4} key={req.id}>
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
@@ -547,21 +583,26 @@ export const RequestList: React.FC = () => {
 
           {formData.items.map((item, index) => (
             <Paper key={index} sx={{ p: 2, mb: 2, bgcolor: 'background.default' }}>
+              <Typography variant="subtitle1" gutterBottom>
+                Item {index + 1}
+              </Typography>
+
+              {/* 1) Autocompletado opcional desde PubChem */}
+              <PubChemSearch
+                onSelect={(result) => handlePubChemSelect(index, result)}
+                label="Autocompletar con PubChem (opcional)"
+                placeholder="Ej: aspirina, etanol, ácido sulfúrico..."
+                helperText="Al elegir un compuesto se completan el nombre, el CID y la fórmula. Todos los campos siguen siendo editables."
+              />
+
+              <Divider sx={{ my: 2 }} />
+
+              {/* 2) Datos del item: siempre editables (trazabilidad) */}
+              <Typography variant="caption" color="textSecondary" gutterBottom display="block">
+                Datos del item
+              </Typography>
+
               <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <PubChemSearch
-                    onSelect={(result) => {
-                      console.log('Resultado seleccionado:', result);
-                      handleItemChange(index, 'itemName', result.name || result.label.split(' (')[0]);
-                      handleItemChange(index, 'catalogNumber', `CID:${result.cid}`);
-                      if (result.formula) {
-                        handleItemChange(index, 'specifications', `Fórmula: ${result.formula}`);
-                      }
-                    }}
-                    label="Buscar reactivo en PubChem"
-                    placeholder="Ej: aspirina, etanol..."
-                  />
-                </Grid>
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
@@ -569,6 +610,7 @@ export const RequestList: React.FC = () => {
                     size="small"
                     value={item.itemName}
                     onChange={(e) => handleItemChange(index, 'itemName', e.target.value)}
+                    helperText="Se autocompleta desde PubChem, pero podés editarlo"
                     required
                   />
                 </Grid>
@@ -600,6 +642,7 @@ export const RequestList: React.FC = () => {
                     value={item.catalogNumber || ''}
                     onChange={(e) => handleItemChange(index, 'catalogNumber', e.target.value)}
                     placeholder="Ej: 50-00-0 (formaldehído)"
+                    helperText="PubChem aporta el CID; podés reemplazarlo por el CAS real"
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -636,20 +679,21 @@ export const RequestList: React.FC = () => {
                     }}
                   />
                 </Grid>
-                {index > 0 && (
-                  <Grid item xs={12}>
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      size="small"
-                      startIcon={<DeleteIcon />}
-                      onClick={() => handleRemoveItem(index)}
-                    >
-                      Eliminar item
-                    </Button>
-                  </Grid>
-                )}
               </Grid>
+
+              {index > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    startIcon={<DeleteIcon />}
+                    onClick={() => handleRemoveItem(index)}
+                  >
+                    Eliminar item
+                  </Button>
+                </Box>
+              )}
             </Paper>
           ))}
 

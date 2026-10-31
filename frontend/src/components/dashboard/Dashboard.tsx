@@ -37,7 +37,7 @@ import {
 } from 'recharts';
 import { reagentService } from '../../services/reagentService';
 import { equipmentService } from '../../services/equipmentService';
-import { Reagent, Equipment } from '../../types';
+import { Reagent, Equipment, EquipmentStatus, normalizeEquipmentStatus, normalizeHazardLevel } from '../../types';
 
 const COLORS = ['#4caf50', '#2196f3', '#ff9800', '#f44336', '#9e9e9e'];
 const hazardColors = {
@@ -63,8 +63,9 @@ export const Dashboard: React.FC = () => {
         reagentService.getAll(),
         equipmentService.getAll(),
       ]);
-      setReagents(reagentsData.data);
-      setEquipment(equipmentData.data);
+      // El backend serializa los enums como texto; se normalizan a número para gráficos y chips.
+      setReagents(reagentsData.data.map(r => ({ ...r, hazardLevel: normalizeHazardLevel(r.hazardLevel) })));
+      setEquipment(equipmentData.data.map(eq => ({ ...eq, status: normalizeEquipmentStatus(eq.status) })));
     } finally {
       setLoading(false);
     }
@@ -101,7 +102,7 @@ export const Dashboard: React.FC = () => {
   }, {} as Record<number, number>);
 
   const statusData = Object.entries(equipmentByStatus).map(([status, count]) => ({
-    name: `Estado ${status}`,
+    name: EquipmentStatus[normalizeEquipmentStatus(status)],
     value: count,
   }));
 

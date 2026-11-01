@@ -100,8 +100,8 @@ export const ExperimentEquipmentSelector: React.FC<ExperimentEquipmentSelectorPr
       {value.length > 0 && (
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
           {value.map((equipmentItem, index) => (
-            <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-              <Box>
+            <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1, mb: 1 }}>
+              <Box sx={{ minWidth: 0, flex: '1 1 auto' }}>
                 <Typography variant="body2">
                   <strong>{equipmentItem.equipmentName}</strong>
                 </Typography>

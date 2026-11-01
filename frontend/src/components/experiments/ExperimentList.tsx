@@ -254,7 +254,11 @@ export const ExperimentList: React.FC = () => {
   return (
     <Container maxWidth="xl">
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{ fontWeight: 600, fontSize: { xs: '1.5rem', sm: '2.125rem' }, overflowWrap: 'anywhere' }}
+        >
           Experimentos
         </Typography>
         <Typography variant="body1" color="textSecondary">
@@ -319,11 +323,11 @@ export const ExperimentList: React.FC = () => {
             : exp.status;
 
           return (
-            <Grid item xs={12} sm={6} lg={4} key={exp.id}>
+            <Grid item xs={12} sm={6} md={4} lg={3} key={exp.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                    <Box sx={{ minWidth: 0, flex: '1 1 auto' }}>
                       <Typography variant="h6" gutterBottom>
                         {exp.name}
                       </Typography>
@@ -434,20 +438,28 @@ export const ExperimentList: React.FC = () => {
 
       {/* Paginación */}
       {totalPages > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, maxWidth: '100%', overflowX: 'auto', py: 0.5 }}>
           <Pagination
             count={totalPages}
             page={page}
             onChange={(_, value) => setPage(value)}
             color="primary"
+            siblingCount={1}
+            size="small"
           />
         </Box>
       )}
 
       {/* Diálogo de creación */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        maxWidth="md"
+        fullWidth
+        sx={{ '& .MuiDialog-paper': { m: { xs: 1.5, sm: 4 }, maxHeight: { xs: '92vh', sm: '90vh' } } }}
+      >
         <DialogTitle>Nuevo Experimento</DialogTitle>
-        <DialogContent>
+        <DialogContent dividers sx={{ overflowY: 'auto' }}>
           <TextField
             fullWidth
             label="Nombre *"
@@ -512,9 +524,15 @@ export const ExperimentList: React.FC = () => {
       </Dialog>
 
       {/* Diálogo de edición */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        sx={{ '& .MuiDialog-paper': { m: { xs: 1.5, sm: 4 }, maxHeight: { xs: '92vh', sm: '90vh' } } }}
+      >
         <DialogTitle>Editar Experimento</DialogTitle>
-        <DialogContent>
+        <DialogContent dividers sx={{ overflowY: 'auto' }}>
           <TextField
             fullWidth
             label="Nombre *"

@@ -21,12 +21,20 @@ import { RequestList } from './components/requests/RequestList';
 const queryClient = new QueryClient();
 
 function App() {
-  const [mode, setMode] = useState<'light' | 'dark'>('light');
+  // El tema se persiste en localStorage para sobrevivir a recargas y logins.
+  const [mode, setMode] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('theme-mode');
+    return saved === 'dark' ? 'dark' : 'light';
+  });
 
   const theme = React.useMemo(() => getTheme(mode), [mode]);
 
   const toggleTheme = () => {
-    setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+    setMode((prev) => {
+      const next = prev === 'light' ? 'dark' : 'light';
+      localStorage.setItem('theme-mode', next);
+      return next;
+    });
   };
 
   const themeContextValue = React.useMemo(

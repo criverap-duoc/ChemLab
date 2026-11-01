@@ -18,6 +18,9 @@ api.interceptors.request.use(request => {
   return request;
 });
 
+// Interceptor global de respuestas: logging + manejo centralizado de 401.
+// Cuando la cookie de sesión expira el backend responde 401 y aquí limpiamos el
+// estado local y mandamos al usuario a /login conservando la ruta original.
 api.interceptors.response.use(
   response => {
     console.log('Response:', response.status, response.config.url);
@@ -25,6 +28,20 @@ api.interceptors.response.use(
   },
   error => {
     console.error('API Error:', error.message, error.config?.url);
+
+    if (error.response?.status === 401) {
+      // No redirigir si ya estamos en /login (evita bucles de redirección).
+      if (!window.location.pathname.startsWith('/login')) {
+        // Limpiar estado local
+        localStorage.removeItem('user');
+        localStorage.removeItem('permissions');
+
+        // Redirigir preservando la ruta original como query
+        const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = `/login?returnUrl=${returnUrl}`;
+      }
+    }
+
     return Promise.reject(error);
   }
 );

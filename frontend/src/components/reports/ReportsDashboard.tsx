@@ -140,7 +140,11 @@ export const ReportsDashboard: React.FC = () => {
   return (
     <Container maxWidth="lg">
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{ fontWeight: 600, fontSize: { xs: '1.5rem', sm: '2.125rem' }, overflowWrap: 'anywhere' }}
+        >
           Reportes y Exportación
         </Typography>
         <Typography variant="body1" color="textSecondary">
@@ -148,9 +152,15 @@ export const ReportsDashboard: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* Tabs */}
+      {/* Tabs (scroll horizontal en xs) */}
       <Paper sx={{ mb: 3 }}>
-        <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
+        <Tabs
+          value={tabValue}
+          onChange={(_, v) => setTabValue(v)}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+        >
           <Tab label="📊 Resumen" />
           <Tab label="🧪 Reactivos" />
           <Tab label="🔧 Equipos" />
@@ -219,6 +229,7 @@ export const ReportsDashboard: React.FC = () => {
                   startIcon={<DownloadIcon />}
                   onClick={handleExportSummaryPDF}
                   color="success"
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
                 >
                   Reporte Ejecutivo (PDF)
                 </Button>

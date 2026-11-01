@@ -176,14 +176,15 @@ export const NotificationBell: React.FC = () => {
   };
 
   return (
-    <div>
+    <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
       <IconButton
         color="inherit"
         onClick={handleClick}
         size="medium"
         aria-label="notificaciones"
+        sx={{ p: { xs: 0.75, sm: 1 } }}
       >
-        <Badge badgeContent={unreadCount} color="error">
+        <Badge badgeContent={unreadCount} color="error" overlap="circular">
           <NotificationsIcon />
         </Badge>
       </IconButton>
@@ -194,7 +195,9 @@ export const NotificationBell: React.FC = () => {
         onClose={handleClose}
         PaperProps={{
           sx: {
+            /* En xs el menú nunca supera el ancho del viewport */
             width: { xs: 'calc(100vw - 24px)', sm: 380 },
+            maxWidth: 'calc(100vw - 16px)',
             maxHeight: { xs: '70vh', sm: 500 },
             mt: 1.5,
           }
@@ -284,6 +287,6 @@ export const NotificationBell: React.FC = () => {
           </List>
         )}
       </Menu>
-    </div>
+    </Box>
   );
 };

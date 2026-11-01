@@ -259,7 +259,11 @@ export const ReagentList: React.FC = () => {
   return (
     <Container maxWidth="xl">
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{ fontWeight: 600, fontSize: { xs: '1.5rem', sm: '2.125rem' }, overflowWrap: 'anywhere' }}
+        >
           Reactivos Químicos
         </Typography>
         <Typography variant="body1" color="textSecondary">
@@ -338,13 +342,13 @@ export const ReagentList: React.FC = () => {
             <Grid item xs={12} sm={6} md={4} lg={3} key={reagent.id}>
               <Card>
                 <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: '1 1 auto' }}>
                       <Avatar sx={{ bgcolor: hazard.color }}>
                         <ScienceIcon />
                       </Avatar>
-                      <Box>
-                        <Typography variant="h6" noWrap sx={{ maxWidth: 150 }}>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="h6" noWrap sx={{ maxWidth: { xs: '100%', sm: 150 } }}>
                           {reagent.name}
                         </Typography>
                         <Typography variant="caption" color="textSecondary">
@@ -441,22 +445,30 @@ export const ReagentList: React.FC = () => {
 
       {/* Paginación */}
       {totalPages > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, maxWidth: '100%', overflowX: 'auto', py: 0.5 }}>
           <Pagination
             count={totalPages}
             page={page}
             onChange={(_, value) => setPage(value)}
             color="primary"
+            siblingCount={1}
+            size="small"
           />
         </Box>
       )}
 
       {/* Diálogo de creación/edición */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        maxWidth="md"
+        fullWidth
+        sx={{ '& .MuiDialog-paper': { m: { xs: 1.5, sm: 4 }, maxHeight: { xs: '92vh', sm: '90vh' } } }}
+      >
         <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white' }}>
           {selectedReagent ? 'Editar Reactivo' : 'Nuevo Reactivo'}
         </DialogTitle>
-        <DialogContent sx={{ mt: 2 }}>
+        <DialogContent dividers sx={{ overflowY: 'auto' }}>
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle2" gutterBottom>
               Buscar en PubChem (Base de datos química gratuita)

@@ -1,0 +1,80 @@
+/* Animaciones y utilidades visuales de las pantallas de autenticación.
+   Solo presentación: no interviene en la lógica de auth.
+   Todas las animaciones se desactivan con prefers-reduced-motion. */
+
+/* Entrada de la tarjeta / panel de marca: fade + slide sutil */
+.auth-enter {
+  animation: chemlab-fade-up 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.auth-enter-delayed {
+  animation: chemlab-fade-up 380ms cubic-bezier(0.22, 1, 0.36, 1) 90ms both;
+}
+
+/* Aparición del Alert de error, sin alterar el layout */
+.auth-alert-enter {
+  animation: chemlab-fade-in 220ms ease-out both;
+}
+
+/* Fondo científico: rotación muy lenta del anillo hexagonal */
+.auth-bg-spin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: chemlab-spin 140s linear infinite;
+}
+
+/* Fondo científico: flotación lenta de la molécula */
+.auth-bg-float {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: chemlab-float 18s ease-in-out infinite;
+}
+
+@keyframes chemlab-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes chemlab-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes chemlab-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes chemlab-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-enter,
+  .auth-enter-delayed,
+  .auth-alert-enter,
+  .auth-bg-spin,
+  .auth-bg-float {
+    animation: none !important;
+  }
+}

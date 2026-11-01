@@ -127,7 +127,7 @@ export const Dashboard: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' }, overflowWrap: 'anywhere' }}>
         Dashboard del Laboratorio
       </Typography>
 
@@ -210,25 +210,30 @@ export const Dashboard: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               Reactivos por Nivel de Peligro
             </Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={hazardData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={(entry) => `${entry.name}: ${entry.value}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {hazardData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {/* Box con altura responsive + overflow oculto: evita desborde horizontal en xs */}
+            <Box sx={{ width: '100%', height: { xs: 260, sm: 300 }, overflow: 'hidden' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={hazardData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    /* En xs solo el número: la etiqueta larga se salía del contenedor */
+                    label={({ value }) => `${value}`}
+                    outerRadius="65%"
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {hazardData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </Box>
           </Paper>
         </Grid>
 
@@ -238,16 +243,26 @@ export const Dashboard: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               Equipos por Estado
             </Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={statusData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="value" fill="#2196f3" />
-              </BarChart>
-            </ResponsiveContainer>
+            <Box sx={{ width: '100%', height: { xs: 260, sm: 300 }, overflow: 'hidden' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={statusData} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  {/* Etiquetas inclinadas para que no se solapen a 320px */}
+                  <XAxis
+                    dataKey="name"
+                    interval={0}
+                    tick={{ fontSize: 11 }}
+                    angle={-30}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="value" fill="#2196f3" />
+                </BarChart>
+              </ResponsiveContainer>
+            </Box>
           </Paper>
         </Grid>
       </Grid>
@@ -261,7 +276,7 @@ export const Dashboard: React.FC = () => {
             </Typography>
             <List>
               {getTopReagents().map((r, i) => (
-                <ListItem key={r.id}>
+                <ListItem key={r.id} sx={{ flexWrap: 'wrap', gap: 1 }}>
                   <ListItemAvatar>
                     <Avatar sx={{ bgcolor: hazardColors[r.hazardLevel as keyof typeof hazardColors] }}>
                       {i + 1}
@@ -270,6 +285,7 @@ export const Dashboard: React.FC = () => {
                   <ListItemText
                     primary={r.name}
                     secondary={`${r.quantity} ${r.unit} - ${r.location}`}
+                    sx={{ minWidth: 0 }}
                   />
                   <Chip
                     label={`Nivel ${r.hazardLevel}`}

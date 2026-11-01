@@ -324,7 +324,11 @@ export const RequestList: React.FC = () => {
   return (
     <Container maxWidth="xl">
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{ fontWeight: 600, fontSize: { xs: '1.5rem', sm: '2.125rem' }, overflowWrap: 'anywhere' }}
+        >
           Solicitudes
         </Typography>
         <Typography variant="body1" color="textSecondary">
@@ -332,9 +336,15 @@ export const RequestList: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* Tabs */}
+      {/* Tabs (scroll horizontal en xs) */}
       <Paper sx={{ mb: 3 }}>
-        <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
+        <Tabs
+          value={tabValue}
+          onChange={(_, v) => setTabValue(v)}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+        >
           <Tab label="Todas las solicitudes" />
           <Tab label="Mis solicitudes" />
         </Tabs>
@@ -410,15 +420,15 @@ export const RequestList: React.FC = () => {
       {/* Grid de solicitudes */}
       <Grid container spacing={3}>
         {filteredRequests.map((req) => (
-          <Grid item xs={12} sm={6} lg={4} key={req.id}>
+          <Grid item xs={12} sm={6} md={4} lg={3} key={req.id}>
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: '1 1 auto' }}>
                     <Avatar sx={{ bgcolor: requestTypeColors[req.type] }}>
                       {requestTypeIcons[req.type]}
                     </Avatar>
-                    <Box>
+                    <Box sx={{ minWidth: 0 }}>
                       <Typography variant="h6" gutterBottom>
                         {req.title}
                       </Typography>
@@ -496,20 +506,28 @@ export const RequestList: React.FC = () => {
 
       {/* Paginación */}
       {totalPages > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, maxWidth: '100%', overflowX: 'auto', py: 0.5 }}>
           <Pagination
             count={totalPages}
             page={page}
             onChange={(_, value) => setPage(value)}
             color="primary"
+            siblingCount={1}
+            size="small"
           />
         </Box>
       )}
 
       {/* Diálogo de creación */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        maxWidth="md"
+        fullWidth
+        sx={{ '& .MuiDialog-paper': { m: { xs: 1.5, sm: 4 }, maxHeight: { xs: '92vh', sm: '90vh' } } }}
+      >
         <DialogTitle>Nueva Solicitud</DialogTitle>
-        <DialogContent>
+        <DialogContent dividers sx={{ overflowY: 'auto' }}>
           <TextField
             fullWidth
             label="Título *"
@@ -531,7 +549,7 @@ export const RequestList: React.FC = () => {
           />
 
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <FormControl fullWidth margin="normal">
                 <InputLabel>Tipo *</InputLabel>
                 <Select
@@ -548,7 +566,7 @@ export const RequestList: React.FC = () => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <FormControl fullWidth margin="normal">
                 <InputLabel>Prioridad *</InputLabel>
                 <Select
@@ -614,7 +632,7 @@ export const RequestList: React.FC = () => {
                     required
                   />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
                     label="Cantidad"
@@ -624,7 +642,7 @@ export const RequestList: React.FC = () => {
                     onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value))}
                   />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
                     label="Unidad"
@@ -657,7 +675,7 @@ export const RequestList: React.FC = () => {
                     placeholder="Pureza, concentración, grado, etc."
                   />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
                     label="Proveedor"
@@ -666,7 +684,7 @@ export const RequestList: React.FC = () => {
                     onChange={(e) => handleItemChange(index, 'supplier', e.target.value)}
                   />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
                     label="Precio estimado"
@@ -715,13 +733,23 @@ export const RequestList: React.FC = () => {
       </Dialog>
 
       {/* Diálogo de vista de detalles */}
-      <Dialog open={openViewDialog} onClose={() => setOpenViewDialog(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={openViewDialog}
+        onClose={() => setOpenViewDialog(false)}
+        maxWidth="md"
+        fullWidth
+        sx={{ '& .MuiDialog-paper': { m: { xs: 1.5, sm: 4 }, maxHeight: { xs: '92vh', sm: '90vh' } } }}
+      >
         {selectedRequest && (
           <>
             <DialogTitle>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <RequestIcon />
-                <Typography variant="h6">{selectedRequest.title}</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                <Box component="span" sx={{ display: 'flex', flexShrink: 0 }}>
+                  <RequestIcon />
+                </Box>
+                <Typography variant="h6" sx={{ minWidth: 0, overflowWrap: 'anywhere' }}>
+                  {selectedRequest.title}
+                </Typography>
               </Box>
             </DialogTitle>
             <DialogContent dividers>
@@ -730,30 +758,32 @@ export const RequestList: React.FC = () => {
                   <Typography variant="body1">{selectedRequest.description}</Typography>
                 </Grid>
 
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <Typography variant="subtitle2">Solicitado por</Typography>
                   <Typography variant="body2">{selectedRequest.requestedBy.name}</Typography>
-                  <Typography variant="caption" color="textSecondary">{selectedRequest.requestedBy.email}</Typography>
+                  <Typography variant="caption" color="textSecondary" sx={{ overflowWrap: 'anywhere', display: 'block' }}>
+                    {selectedRequest.requestedBy.email}
+                  </Typography>
                 </Grid>
 
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <Typography variant="subtitle2">Fecha</Typography>
                   <Typography variant="body2">
                     {format(new Date(selectedRequest.requestedAt), 'dd/MM/yyyy HH:mm', { locale: es })}
                   </Typography>
                 </Grid>
 
-                <Grid item xs={4}>
+                <Grid item xs={12} sm={4}>
                   <Typography variant="subtitle2">Tipo</Typography>
                   <Box sx={{ mt: 1 }}>{getTypeChip(selectedRequest.type)}</Box>
                 </Grid>
 
-                <Grid item xs={4}>
+                <Grid item xs={12} sm={4}>
                   <Typography variant="subtitle2">Prioridad</Typography>
                   <Box sx={{ mt: 1 }}>{getPriorityChip(selectedRequest.priority)}</Box>
                 </Grid>
 
-                <Grid item xs={4}>
+                <Grid item xs={12} sm={4}>
                   <Typography variant="subtitle2">Estado</Typography>
                   <Box sx={{ mt: 1 }}>{getStatusChip(selectedRequest.status)}</Box>
                 </Grid>
@@ -829,7 +859,13 @@ export const RequestList: React.FC = () => {
       </Dialog>
 
       {/* Diálogo de aprobación */}
-      <Dialog open={openApproveDialog} onClose={() => setOpenApproveDialog(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openApproveDialog}
+        onClose={() => setOpenApproveDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        sx={{ '& .MuiDialog-paper': { m: { xs: 1.5, sm: 4 }, maxHeight: { xs: '92vh', sm: '90vh' } } }}
+      >
         <DialogTitle>Aprobar Solicitud</DialogTitle>
         <DialogContent>
           <TextField
@@ -852,7 +888,13 @@ export const RequestList: React.FC = () => {
       </Dialog>
 
       {/* Diálogo de rechazo */}
-      <Dialog open={openRejectDialog} onClose={() => setOpenRejectDialog(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openRejectDialog}
+        onClose={() => setOpenRejectDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        sx={{ '& .MuiDialog-paper': { m: { xs: 1.5, sm: 4 }, maxHeight: { xs: '92vh', sm: '90vh' } } }}
+      >
         <DialogTitle>Rechazar Solicitud</DialogTitle>
         <DialogContent>
           <TextField

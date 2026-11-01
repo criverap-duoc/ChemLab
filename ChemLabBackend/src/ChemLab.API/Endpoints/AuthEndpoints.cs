@@ -47,14 +47,17 @@ public static class AuthEndpoints
             if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
                 return Results.BadRequest(new { Error = "Email y contraseña son requeridos" });
 
+            // F8.4: rechazar usuarios inexistentes o desactivados ANTES de validar credenciales.
+            // Un usuario con IsActive = false no debe poder iniciar sesión aunque su
+            // contraseña sea correcta (bug de seguridad detectado en la auditoría F8).
+            var user = await userManager.FindByEmailAsync(request.Email);
+            if (user == null || !user.IsActive)
+                return Results.Unauthorized();
+
             var result = await signInManager.PasswordSignInAsync(request.Email, request.Password, false, false);
 
             if (result.Succeeded)
             {
-                var user = await userManager.FindByEmailAsync(request.Email);
-                if (user == null)
-                    return Results.Unauthorized();
-
                 // F6.5f: los roles se leen con SQL CRUDO sobre la MISMA conexión de EF Core.
                 // Identity/UserManager.GetRolesAsync() devolvía vacío con este modelo
                 // (Guid + converter), así que el rol se resuelve aquí directamente.

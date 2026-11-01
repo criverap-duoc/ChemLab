@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using ChemLab.API.Services;
 using ChemLab.API.Hubs;
+using ChemLab.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -77,7 +78,12 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddAuthentication();
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    // F8.2: policy exclusiva de la gestión de usuarios (/api/users). El claim de rol viaja
+    // en la cookie porque AddRoles<IdentityRole<Guid>>() está registrado (F6.5c).
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("ADMIN"));
+});
 
 builder.Services.AddHttpContextAccessor();
 
@@ -131,6 +137,11 @@ app.UseCors("ReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
 
+// F8.1: auditoría automática de POST/PUT/PATCH/DELETE en /api/{reagents|equipment|
+// experiments|requests}. Va DESPUÉS de UseAuthentication/UseAuthorization para tener
+// HttpContext.User resuelto y para no auditar peticiones rechazadas (401/403).
+app.UseMiddleware<AuditMiddleware>();
+
 // Health check
 app.MapGet("/api/health", () => Results.Ok(new
 {
@@ -167,5 +178,6 @@ app.MapTestEndpoints();
 app.MapDebugEndpoints();
 app.MapNotificationEndpoints();
 app.MapTraceabilityEndpoints();
+app.MapUserEndpoints();
 
 app.Run();

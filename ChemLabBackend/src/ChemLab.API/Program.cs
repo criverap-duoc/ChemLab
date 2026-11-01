@@ -50,7 +50,11 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.Path = "/";
 
-    if (builder.Environment.IsDevelopment())
+    // F9.2: cualquier entorno != Production (Development, Postgres, Staging...) es local/http,
+    // así que la cookie debe viajar con SameSite=Lax y sin Secure. Antes solo se cubría
+    // Development, y con ASPNETCORE_ENVIRONMENT=Postgres se activaba Secure=Always (cookie
+    // descartada por el navegador/curl sobre http) y el login parecía fallar.
+    if (!builder.Environment.IsProduction())
     {
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.Cookie.SecurePolicy = CookieSecurePolicy.None;
@@ -92,7 +96,15 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        // F9.2: fuera de Production (Development, Postgres, Staging) se aceptan los dos
+        // orígenes locales: el frontend (3000) y la propia API servida en 5000 (Smoke tests
+        // / Swagger / SignalR desde el navegador). En Production se mantiene el
+        // comportamiento anterior para no romper el deploy actual.
+        var allowedOrigins = builder.Environment.IsProduction()
+            ? new[] { "http://localhost:3000" }
+            : new[] { "http://localhost:3000", "http://localhost:5000" };
+
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();

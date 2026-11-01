@@ -24,6 +24,22 @@ public static class DependencyInjection
 
         services.AddDbContext<ApplicationDbContext>(options =>
         {
+            // F9.1: selección de provider por forma de la connection string.
+            // PostgreSQL (Supabase/Render/Docker) usa "Host=" o "Server="; SQLite usa
+            // "Data Source=". Los paréntesis explícitos evitan que el && gane precedencia.
+            var isPostgres =
+                (connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase)
+                 || connectionString.Contains("Server=", StringComparison.OrdinalIgnoreCase))
+                && !connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase);
+
+            if (isPostgres)
+            {
+                // Sin normalización de rutas: la cadena se usa tal cual (TLS/SSL lo
+                // gestiona el propio connection string, p.ej. "SSL Mode=Require").
+                options.UseNpgsql(connectionString);
+                return;
+            }
+
             // F6.5g: se normaliza el DataSource a RUTA ABSOLUTA antes de abrir la conexión.
             // Si la cadena trae una ruta relativa, SQLite la resolvería contra el CWD del
             // proceso (p.ej. bin\Debug\net8.0) y abriría OTRO archivo .db vacío.

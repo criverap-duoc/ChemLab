@@ -15,19 +15,19 @@ namespace ChemLab.Infrastructure.Migrations
                 name: "Requests",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
-                    Type = table.Column<int>(type: "INTEGER", nullable: false),
-                    Status = table.Column<int>(type: "INTEGER", nullable: false),
-                    Priority = table.Column<int>(type: "INTEGER", nullable: false),
-                    RequestedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ExpectedDate = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    ResolvedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    Comments = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
-                    RejectionReason = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
-                    RequestedById = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ApprovedById = table.Column<Guid>(type: "TEXT", nullable: true)
+                    Id = table.Column<Guid>(nullable: false),
+                    Title = table.Column<string>(maxLength: 200, nullable: false),
+                    Description = table.Column<string>(maxLength: 1000, nullable: false),
+                    Type = table.Column<int>(nullable: false),
+                    Status = table.Column<int>(nullable: false),
+                    Priority = table.Column<int>(nullable: false),
+                    RequestedAt = table.Column<DateTime>(nullable: false),
+                    ExpectedDate = table.Column<DateTime>(nullable: true),
+                    ResolvedAt = table.Column<DateTime>(nullable: true),
+                    Comments = table.Column<string>(maxLength: 500, nullable: true),
+                    RejectionReason = table.Column<string>(maxLength: 500, nullable: true),
+                    RequestedById = table.Column<Guid>(nullable: false),
+                    ApprovedById = table.Column<Guid>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -50,16 +50,16 @@ namespace ChemLab.Infrastructure.Migrations
                 name: "RequestItems",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    RequestId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ItemName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    CatalogNumber = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
-                    CasNumber = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    Quantity = table.Column<decimal>(type: "TEXT", nullable: true),
-                    Unit = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
-                    Specifications = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
-                    Supplier = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
-                    EstimatedPrice = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: true)
+                    Id = table.Column<Guid>(nullable: false),
+                    RequestId = table.Column<Guid>(nullable: false),
+                    ItemName = table.Column<string>(maxLength: 200, nullable: false),
+                    CatalogNumber = table.Column<string>(maxLength: 100, nullable: true),
+                    CasNumber = table.Column<string>(maxLength: 50, nullable: true),
+                    Quantity = table.Column<decimal>(nullable: true),
+                    Unit = table.Column<string>(maxLength: 20, nullable: true),
+                    Specifications = table.Column<string>(maxLength: 500, nullable: true),
+                    Supplier = table.Column<string>(maxLength: 200, nullable: true),
+                    EstimatedPrice = table.Column<decimal>(precision: 18, scale: 2, nullable: true)
                 },
                 constraints: table =>
                 {

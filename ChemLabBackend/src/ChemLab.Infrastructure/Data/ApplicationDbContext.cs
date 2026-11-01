@@ -30,14 +30,21 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
     {
         base.OnModelCreating(builder);
 
-        // F6.5j: forzar Guid → string minúsculas (alineado con Identity)
-        foreach (var entityType in builder.Model.GetEntityTypes())
+        // F6.5j: forzar Guid → string minúsculas (alineado con Identity).
+        // F9.1: solo para SQLite. En PostgreSQL los Guid se mapean al tipo nativo `uuid`;
+        // aplicar GuidToStringConverter ahí rompería el envío de parámetros (text vs uuid).
+        // Database.ProviderName está disponible durante OnModelCreating porque proviene de
+        // las DbContextOptions, así que no hace falta inyectar un flag ni llamar a la BD.
+        if (Database.IsSqlite())
         {
-            foreach (var property in entityType.GetProperties())
+            foreach (var entityType in builder.Model.GetEntityTypes())
             {
-                if (property.ClrType == typeof(Guid) || property.ClrType == typeof(Guid?))
+                foreach (var property in entityType.GetProperties())
                 {
-                    property.SetValueConverter(new GuidToStringConverter());
+                    if (property.ClrType == typeof(Guid) || property.ClrType == typeof(Guid?))
+                    {
+                        property.SetValueConverter(new GuidToStringConverter());
+                    }
                 }
             }
         }

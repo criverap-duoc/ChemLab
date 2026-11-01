@@ -15,19 +15,19 @@ namespace ChemLab.Infrastructure.Migrations
                 name: "Experiments",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
-                    Status = table.Column<int>(type: "INTEGER", nullable: false),
-                    StartDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    EndDate = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    Protocol = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: true),
-                    Results = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: true),
-                    Notes = table.Column<string>(type: "TEXT", nullable: true),
-                    CreatedById = table.Column<Guid>(type: "TEXT", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Id = table.Column<Guid>(nullable: false),
+                    Name = table.Column<string>(maxLength: 200, nullable: false),
+                    Description = table.Column<string>(maxLength: 1000, nullable: false),
+                    Status = table.Column<int>(nullable: false),
+                    StartDate = table.Column<DateTime>(nullable: false),
+                    EndDate = table.Column<DateTime>(nullable: true),
+                    Protocol = table.Column<string>(maxLength: 4000, nullable: true),
+                    Results = table.Column<string>(maxLength: 4000, nullable: true),
+                    Notes = table.Column<string>(nullable: true),
+                    CreatedById = table.Column<Guid>(nullable: false),
+                    CreatedAt = table.Column<DateTime>(nullable: false),
+                    UpdatedAt = table.Column<DateTime>(nullable: true),
+                    IsActive = table.Column<bool>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -44,12 +44,12 @@ namespace ChemLab.Infrastructure.Migrations
                 name: "ExperimentEquipment",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ExperimentId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    EquipmentId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    UsageHours = table.Column<double>(type: "REAL", nullable: true),
-                    CalibrationBefore = table.Column<string>(type: "TEXT", nullable: true),
-                    CalibrationAfter = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<Guid>(nullable: false),
+                    ExperimentId = table.Column<Guid>(nullable: false),
+                    EquipmentId = table.Column<Guid>(nullable: false),
+                    UsageHours = table.Column<double>(nullable: true),
+                    CalibrationBefore = table.Column<string>(nullable: true),
+                    CalibrationAfter = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -72,12 +72,12 @@ namespace ChemLab.Infrastructure.Migrations
                 name: "ExperimentReagents",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ExperimentId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ReagentId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    QuantityUsed = table.Column<decimal>(type: "TEXT", precision: 18, scale: 4, nullable: false),
-                    Unit = table.Column<string>(type: "TEXT", nullable: false),
-                    BatchNumber = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<Guid>(nullable: false),
+                    ExperimentId = table.Column<Guid>(nullable: false),
+                    ReagentId = table.Column<Guid>(nullable: false),
+                    QuantityUsed = table.Column<decimal>(precision: 18, scale: 4, nullable: false),
+                    Unit = table.Column<string>(nullable: false),
+                    BatchNumber = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {

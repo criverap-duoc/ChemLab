@@ -1,5 +1,5 @@
 // @ts-ignore
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Container,
   Typography,
@@ -33,15 +33,13 @@ import {
   Delete as DeleteIcon,
   Science as ScienceIcon,
   Search as SearchIcon,
-  FilterList as FilterIcon,
   Warning as WarningIcon,
   History as HistoryIcon,
 } from '@mui/icons-material';
 import { reagentService } from '../../services/reagentService';
-import { Reagent, CreateReagentDto } from '../../types';
-import { useTheme } from '@mui/material/styles';
+import { Reagent, CreateReagentDto, normalizeHazardLevel } from '../../types';
 import { EntityHistory } from '../traceability/EntityHistory';
-import { pubchemService, PubChemData, PubChemSearchResult } from '../../services/pubchemService';
+import { pubchemService, PubChemData } from '../../services/pubchemService';
 
 const hazardLevels = [
   { value: 0, label: 'Ninguno', color: '#4caf50', icon: '✅' },
@@ -80,15 +78,10 @@ export const ReagentList: React.FC = () => {
   const [searching, setSearching] = useState(false);
   const [enrichedData, setEnrichedData] = useState<PubChemData | null>(null);
 
-  const theme = useTheme();
-
-  useEffect(() => {
-    loadReagents();
-  }, [page, searchTerm, filterHazard]);
-
-  const loadReagents = async () => {
+  const loadReagents = useCallback(async () => {
     const data = await reagentService.getAll();
-    let filtered = data.data;
+    // El backend serializa HazardLevel como texto ("Low", "High"...); se normaliza a número.
+    let filtered = data.data.map(r => ({ ...r, hazardLevel: normalizeHazardLevel(r.hazardLevel) }));
 
     // Filtrar por búsqueda
     if (searchTerm) {
@@ -111,7 +104,11 @@ export const ReagentList: React.FC = () => {
 
     setReagents(paginated);
     setTotalPages(Math.ceil(filtered.length / itemsPerPage));
-  };
+  }, [page, searchTerm, filterHazard]);
+
+  useEffect(() => {
+    loadReagents();
+  }, [loadReagents]);
 
   const handleOpenDialog = (reagent?: Reagent) => {
     if (reagent) {
@@ -147,19 +144,42 @@ export const ReagentList: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (selectedReagent) {
-      await reagentService.update(selectedReagent.id, formData);
-    } else {
-      await reagentService.create(formData);
+    try {
+      if (selectedReagent) {
+        const updateData = {
+          name: formData.name,
+          chemicalFormula: formData.chemicalFormula,
+          casNumber: formData.casNumber || undefined,
+          quantity: Number(formData.quantity),
+          unit: formData.unit,
+          location: formData.location,
+          hazardLevel: Number(formData.hazardLevel),
+          supplier: formData.supplier || undefined,
+          expiryDate: formData.expiryDate || undefined,
+          minQuantity: Number(formData.minQuantity)
+        };
+
+        console.log('📤 Enviando actualización:', JSON.stringify(updateData, null, 2));
+
+        await reagentService.update(selectedReagent.id, updateData);
+      } else {
+        await reagentService.create(formData);
+      }
+      setOpenDialog(false);
+      loadReagents();
+    } catch (error) {
+      console.error('Error saving reagent:', error);
     }
-    setOpenDialog(false);
-    loadReagents();
   };
 
   const handleDelete = async (id: string) => {
     if (window.confirm('¿Estás seguro de eliminar este reactivo?')) {
-      await reagentService.delete(id);
-      loadReagents();
+      try {
+        await reagentService.delete(id);
+        loadReagents();
+      } catch (error) {
+        console.error('Error deleting reagent:', error);
+      }
     }
   };
 
@@ -239,7 +259,11 @@ export const ReagentList: React.FC = () => {
   return (
     <Container maxWidth="xl">
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{ fontWeight: 600, fontSize: { xs: '1.5rem', sm: '2.125rem' }, overflowWrap: 'anywhere' }}
+        >
           Reactivos Químicos
         </Typography>
         <Typography variant="body1" color="textSecondary">
@@ -318,13 +342,13 @@ export const ReagentList: React.FC = () => {
             <Grid item xs={12} sm={6} md={4} lg={3} key={reagent.id}>
               <Card>
                 <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: '1 1 auto' }}>
                       <Avatar sx={{ bgcolor: hazard.color }}>
                         <ScienceIcon />
                       </Avatar>
-                      <Box>
-                        <Typography variant="h6" noWrap sx={{ maxWidth: 150 }}>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="h6" noWrap sx={{ maxWidth: { xs: '100%', sm: 150 } }}>
                           {reagent.name}
                         </Typography>
                         <Typography variant="caption" color="textSecondary">
@@ -421,22 +445,30 @@ export const ReagentList: React.FC = () => {
 
       {/* Paginación */}
       {totalPages > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, maxWidth: '100%', overflowX: 'auto', py: 0.5 }}>
           <Pagination
             count={totalPages}
             page={page}
             onChange={(_, value) => setPage(value)}
             color="primary"
+            siblingCount={1}
+            size="small"
           />
         </Box>
       )}
 
       {/* Diálogo de creación/edición */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        maxWidth="md"
+        fullWidth
+        sx={{ '& .MuiDialog-paper': { m: { xs: 1.5, sm: 4 }, maxHeight: { xs: '92vh', sm: '90vh' } } }}
+      >
         <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white' }}>
           {selectedReagent ? 'Editar Reactivo' : 'Nuevo Reactivo'}
         </DialogTitle>
-        <DialogContent sx={{ mt: 2 }}>
+        <DialogContent dividers sx={{ overflowY: 'auto' }}>
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle2" gutterBottom>
               Buscar en PubChem (Base de datos química gratuita)
@@ -566,7 +598,7 @@ export const ReagentList: React.FC = () => {
                 fullWidth
                 label="Número CAS"
                 margin="normal"
-                value={formData.casNumber}
+                value={formData.casNumber || ''}
                 onChange={(e) => setFormData({ ...formData, casNumber: e.target.value })}
               />
             </Grid>
@@ -575,7 +607,7 @@ export const ReagentList: React.FC = () => {
                 fullWidth
                 label="Proveedor"
                 margin="normal"
-                value={formData.supplier}
+                value={formData.supplier || ''}
                 onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
               />
             </Grid>
@@ -661,7 +693,7 @@ export const ReagentList: React.FC = () => {
                 type="date"
                 margin="normal"
                 InputLabelProps={{ shrink: true }}
-                value={formData.expiryDate}
+                value={formData.expiryDate || ''}
                 onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
               />
             </Grid>

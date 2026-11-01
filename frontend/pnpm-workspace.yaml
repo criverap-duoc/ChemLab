@@ -1,0 +1,9 @@
+allowBuilds:
+  core-js: true
+  core-js-pure: true
+
+publicHoistPattern:
+  - '*eslint*'
+  - '*prettier*'
+autoInstallPeers: true
+strictPeerDependencies: false

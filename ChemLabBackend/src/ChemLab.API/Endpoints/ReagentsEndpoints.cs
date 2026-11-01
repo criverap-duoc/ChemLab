@@ -1,9 +1,12 @@
+// ChemLabBackend\src\ChemLab.API\Endpoints\ReagentsEndpoints.cs
 using ChemLab.Application.DTOs;
 using ChemLab.Domain.Entities;
 using ChemLab.Domain.Enums;
 using ChemLab.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ChemLab.API.Services;
+using System.Security.Claims;
 
 namespace ChemLab.API.Endpoints;
 
@@ -36,11 +39,25 @@ public static class ReagentsEndpoints
 
     private static async Task<IResult> GetAllReagents(
         ApplicationDbContext context,
+        HttpContext httpContext,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        var reagents = await context.Reagents
+        var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
+            return Results.Unauthorized();
+
+        // ADMIN y LAB_MANAGER ven todo el inventario; RESEARCHER y LAB_TECH solo lo propio
+        var canViewAll = httpContext.User.IsInRole("ADMIN") || httpContext.User.IsInRole("LAB_MANAGER");
+
+        var query = context.Reagents
             .Where(r => r.IsActive)
+            .AsQueryable();
+
+        if (!canViewAll)
+            query = query.Where(r => r.CreatedById == userId);
+
+        var reagents = await query
             .Include(r => r.CreatedBy)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -61,7 +78,7 @@ public static class ReagentsEndpoints
             })
             .ToListAsync();
 
-        var totalCount = await context.Reagents.CountAsync(r => r.IsActive);
+        var totalCount = await query.CountAsync();
 
         return Results.Ok(new
         {
@@ -106,7 +123,8 @@ public static class ReagentsEndpoints
     private static async Task<IResult> CreateReagent(
         [FromBody] CreateReagentDto dto,
         ApplicationDbContext context,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        INotificationService notificationService)  // <-- AGREGAR
     {
         var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst("sub")?.Value
             ?? httpContextAccessor.HttpContext?.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -132,18 +150,30 @@ public static class ReagentsEndpoints
         context.Reagents.Add(reagent);
         await context.SaveChangesAsync();
 
+        // 🔥 VERIFICAR STOCK BAJO TAMBIÉN EN CREACIÓN
+        if (reagent.Quantity <= reagent.MinQuantity)
+        {
+            Console.WriteLine($"🔔 NUEVO REACTIVO CON STOCK BAJO: {reagent.Name}");
+            await notificationService.NotifyLowStock(reagent);
+        }
+
         return Results.Created($"/api/reagents/{reagent.Id}", new { Id = reagent.Id });
     }
 
     private static async Task<IResult> UpdateReagent(
         Guid id,
         [FromBody] UpdateReagentDto dto,
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        INotificationService notificationService)
     {
         var reagent = await context.Reagents.FindAsync(id);
 
         if (reagent is null || !reagent.IsActive)
             return Results.NotFound(new { Message = "Reagent not found" });
+
+        // Guardar valores anteriores para debug
+        var oldQuantity = reagent.Quantity;
+        var oldMinQuantity = reagent.MinQuantity;
 
         reagent.Name = dto.Name ?? reagent.Name;
         reagent.ChemicalFormula = dto.ChemicalFormula ?? reagent.ChemicalFormula;
@@ -158,6 +188,24 @@ public static class ReagentsEndpoints
         reagent.UpdatedAt = DateTime.UtcNow;
 
         await context.SaveChangesAsync();
+
+        // LOGS PARA DEBUG
+        Console.WriteLine("=================================");
+        Console.WriteLine($"🔍 REAGENTE ACTUALIZADO: {reagent.Name}");
+        Console.WriteLine($"📊 Quantity: {reagent.Quantity}, MinQuantity: {reagent.MinQuantity}");
+        Console.WriteLine($"📉 Stock bajo?: {reagent.Quantity <= reagent.MinQuantity}");
+
+        if (reagent.Quantity <= reagent.MinQuantity)
+        {
+            Console.WriteLine("✅ CONDICIÓN DE STOCK BAJO CUMPLIDA - Enviando notificación...");
+            await notificationService.NotifyLowStock(reagent);
+            Console.WriteLine("✅ NOTIFICACIÓN ENVIADA (después de llamar al servicio)");
+        }
+        else
+        {
+            Console.WriteLine("❌ Stock normal, no se envía notificación");
+        }
+        Console.WriteLine("=================================");
 
         return Results.Ok(new { Message = "Reagent updated successfully" });
     }

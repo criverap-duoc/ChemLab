@@ -14,6 +14,7 @@ import {
   Chip,
   IconButton,
   CardActions,
+  Grid,
   Paper,
   InputAdornment,
   Avatar,
@@ -23,13 +24,12 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Science as ScienceIcon,
   Search as SearchIcon,
   CalendarToday as CalendarIcon,
   Build as BuildIcon,
 } from '@mui/icons-material';
 import { equipmentService } from '../../services/equipmentService';
-import { Equipment, EquipmentStatus, StatusColors, CreateEquipmentDto } from '../../types';
+import { Equipment, EquipmentStatus, StatusColors, CreateEquipmentDto, normalizeEquipmentStatus } from '../../types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -54,7 +54,8 @@ export const EquipmentList: React.FC = () => {
 
   const loadEquipment = async () => {
     const data = await equipmentService.getAll();
-    setEquipment(data.data);
+    // El backend serializa el enum como texto ("Available", "InUse"...); se normaliza a número.
+    setEquipment(data.data.map(eq => ({ ...eq, status: normalizeEquipmentStatus(eq.status) })));
   };
 
   const handleOpenDialog = (eq?: Equipment) => {
@@ -127,7 +128,11 @@ export const EquipmentList: React.FC = () => {
   return (
     <Container maxWidth="lg">
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{ fontWeight: 600, fontSize: { xs: '1.5rem', sm: '2.125rem' }, overflowWrap: 'anywhere' }}
+        >
           Equipos de Laboratorio
         </Typography>
         <Typography variant="body1" color="textSecondary">
@@ -135,10 +140,10 @@ export const EquipmentList: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* Barra de búsqueda y acciones */}
+      {/* Barra de búsqueda y acciones (apilada en xs) */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
-          <Box sx={{ flex: '1 1 60%', minWidth: '300px' }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} md={8}>
             <TextField
               fullWidth
               placeholder="Buscar por nombre, modelo o ubicación..."
@@ -153,8 +158,8 @@ export const EquipmentList: React.FC = () => {
               }}
               size="small"
             />
-          </Box>
-          <Box sx={{ flex: '0 1 auto', minWidth: '200px' }}>
+          </Grid>
+          <Grid item xs={12} md={4}>
             <Button
               fullWidth
               variant="contained"
@@ -163,16 +168,16 @@ export const EquipmentList: React.FC = () => {
             >
               Nuevo Equipo
             </Button>
-          </Box>
-        </Box>
+          </Grid>
+        </Grid>
       </Paper>
 
-      {/* Grid de equipos con flexbox */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+      {/* Grid de equipos: xs=12 sm=6 md=4 lg=3 */}
+      <Grid container spacing={3}>
         {filteredEquipment.map((item) => {
           const dueSoon = isCalibrationDue(item.nextCalibration);
           return (
-            <Box key={item.id} sx={{ flex: '1 1 300px', maxWidth: '400px' }}>
+            <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
               <Card
                 sx={{
                   height: '100%',
@@ -202,8 +207,8 @@ export const EquipmentList: React.FC = () => {
                     <Avatar sx={{ bgcolor: 'primary.main' }}>
                       <BuildIcon />
                     </Avatar>
-                    <Box>
-                      <Typography variant="h6" noWrap sx={{ maxWidth: 200 }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="h6" noWrap sx={{ maxWidth: { xs: '100%', sm: 200 } }}>
                         {item.name}
                       </Typography>
                       <Typography variant="body2" color="textSecondary">
@@ -274,17 +279,23 @@ export const EquipmentList: React.FC = () => {
                   </Tooltip>
                 </CardActions>
               </Card>
-            </Box>
+            </Grid>
           );
         })}
-      </Box>
+      </Grid>
 
       {/* Diálogo de creación/edición */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        maxWidth="md"
+        fullWidth
+        sx={{ '& .MuiDialog-paper': { m: { xs: 1.5, sm: 4 }, maxHeight: { xs: '92vh', sm: '90vh' } } }}
+      >
         <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white' }}>
           {selectedEquipment ? 'Editar Equipo' : 'Nuevo Equipo'}
         </DialogTitle>
-        <DialogContent sx={{ mt: 2 }}>
+        <DialogContent dividers sx={{ overflowY: 'auto' }}>
           <TextField
             fullWidth
             label="Nombre *"

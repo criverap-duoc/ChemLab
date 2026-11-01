@@ -1,0 +1,39 @@
+# ---------- SQLite (ChemLab) ----------
+*.db
+*.db.old
+*.db.bak*
+*.db-shm
+*.db-wal
+
+# ---------- Logs / IDE ----------
+Logs/
+*.log
+.vs/
+.vscode/
+.idea/
+TestResults/
+
+# ---------- .NET ----------
+node_modules/
+bin/
+obj/
+*.user
+*.suo
+
+# ---------- Secretos / sesión local ----------
+.env
+.env.*
+!.env.example
+cookies.txt
+Run dotnet.txt
+
+# ---------- Lockfiles no oficiales (el oficial es pnpm-lock.yaml) ----------
+package-lock.json
+yarn.lock
+
+# ---------- Basura de shell: redirecciones mal escritas que llegaron a versionarse (F8.3) ----------
+frontend/[0-9]*
+frontend/ERROR
+frontend/TS[0-9]*
+
+# Nota: 'theme-mode' NO se ignora porque no es un archivo: vive en localStorage del navegador.

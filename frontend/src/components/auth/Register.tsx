@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import {
-  Button,
-  TextField,
-  Container,
-  Typography,
-  Box,
   Alert,
-  Paper,
+  Box,
+  Button,
+  CircularProgress,
   Grid,
+  IconButton,
+  InputAdornment,
+  Link,
+  TextField,
+  Typography,
 } from '@mui/material';
+import {
+  Email as EmailIcon,
+  Lock as LockIcon,
+  Person as PersonIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+} from '@mui/icons-material';
+import { AuthLayout } from './AuthLayout';
 
 export const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -23,6 +33,9 @@ export const Register: React.FC = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // Estados solo visuales: mostrar u ocultar las contraseñas.
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,94 +64,206 @@ export const Register: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Paper elevation={3} sx={{ mt: 8, p: 4 }}>
-        <Typography variant="h4" align="center" gutterBottom>
-          ChemLab 🧪
-        </Typography>
-        <Typography variant="h6" align="center" color="textSecondary" gutterBottom>
-          Crear Cuenta
-        </Typography>
+    <AuthLayout
+      title="Crear Cuenta"
+      subtitle="Completa tus datos para empezar a gestionar tu laboratorio con ChemLab."
+      maxWidth={520}
+    >
+      {error && (
+        <Alert
+          severity="error"
+          role="alert"
+          className="auth-alert-enter"
+          sx={{ mb: 2.5, borderRadius: '12px' }}
+        >
+          {error}
+        </Alert>
+      )}
 
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Nombre"
-                value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                required
-                disabled={loading}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Apellido"
-                value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                required
-                disabled={loading}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-                disabled={loading}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Contraseña"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                required
-                disabled={loading}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Confirmar Contraseña"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                required
-                disabled={loading}
-              />
-            </Grid>
+      <form onSubmit={handleSubmit}>
+        <Grid container spacing={2.5}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Nombre"
+              autoComplete="given-name"
+              value={formData.firstName}
+              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              required
+              disabled={loading}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PersonIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+              }}
+            />
           </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Apellido"
+              autoComplete="family-name"
+              value={formData.lastName}
+              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+              required
+              disabled={loading}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PersonIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              autoComplete="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
+              disabled={loading}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <EmailIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Contraseña"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              required
+              disabled={loading}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      edge="end"
+                      size="small"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      disabled={loading}
+                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    >
+                      {showPassword ? (
+                        <VisibilityOffIcon fontSize="small" />
+                      ) : (
+                        <VisibilityIcon fontSize="small" />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Confirmar Contraseña"
+              type={showConfirmPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              required
+              disabled={loading}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      edge="end"
+                      size="small"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      disabled={loading}
+                      aria-label={
+                        showConfirmPassword
+                          ? 'Ocultar confirmación de contraseña'
+                          : 'Mostrar confirmación de contraseña'
+                      }
+                    >
+                      {showConfirmPassword ? (
+                        <VisibilityOffIcon fontSize="small" />
+                      ) : (
+                        <VisibilityIcon fontSize="small" />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+        </Grid>
 
-          <Button
-            fullWidth
-            type="submit"
-            variant="contained"
-            sx={{ mt: 3 }}
-            disabled={loading}
-          >
-            {loading ? 'Registrando...' : 'Registrarse'}
-          </Button>
+        <Button
+          fullWidth
+          type="submit"
+          variant="contained"
+          size="large"
+          disabled={loading}
+          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : undefined}
+          sx={{
+            mt: 3,
+            py: 1.25,
+            borderRadius: '12px',
+            fontSize: '0.975rem',
+            '&:focus-visible': {
+              outline: '2px solid',
+              outlineColor: 'primary.main',
+              outlineOffset: 2,
+            },
+          }}
+        >
+          {loading ? 'Registrando...' : 'Registrarse'}
+        </Button>
 
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <Typography variant="body2">
-              ¿Ya tienes cuenta?{' '}
-              <Link to="/login" style={{ textDecoration: 'none' }}>
-                Inicia Sesión
-              </Link>
-            </Typography>
-          </Box>
-        </form>
-      </Paper>
-    </Container>
+        <Box sx={{ mt: 3, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
+            ¿Ya tienes cuenta?{' '}
+            <Link
+              component={RouterLink}
+              to="/login"
+              underline="hover"
+              sx={{
+                fontWeight: 700,
+                /* Claro: text.secondary (6.7:1). Oscuro: primary.light (5.1:1). */
+                color: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? theme.palette.primary.light
+                    : theme.palette.text.secondary,
+                '&:focus-visible': {
+                  outline: '2px solid',
+                  outlineColor: 'primary.main',
+                  outlineOffset: 2,
+                  borderRadius: '4px',
+                },
+              }}
+            >
+              Inicia Sesión
+            </Link>
+          </Typography>
+        </Box>
+      </form>
+    </AuthLayout>
   );
 };

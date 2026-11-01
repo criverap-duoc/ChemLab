@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { Permission } from '../../types';
 
@@ -16,11 +16,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAll = true,
   fallbackPath = '/login'
 }) => {
+  const location = useLocation();
   const user = authService.getCurrentUser();
 
-  // Si no hay usuario, redirigir al login
+  // Si no hay usuario, redirigir al login conservando la ruta original.
+  // `replace` evita que la ruta protegida quede en el historial.
   if (!user) {
-    return <Navigate to={fallbackPath} />;
+    const returnUrl = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`${fallbackPath}?returnUrl=${returnUrl}`} replace />;
   }
 
   // Si no se requieren permisos específicos, permitir acceso

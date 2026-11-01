@@ -38,7 +38,6 @@ export const PERMISSIONS = {
   EDIT_EXPERIMENT: 'edit:experiment',
   DELETE_EXPERIMENT: 'delete:experiment',
   VIEW_EXPERIMENT: 'view:experiment',
-
   // Users
   MANAGE_USERS: 'manage:users',
   VIEW_USERS: 'view:users',
@@ -177,3 +176,47 @@ export const StatusColors = {
   3: '#f44336', // rojo
   4: '#9e9e9e'  // gris
 } as const;
+
+// El backend serializa los enums como texto (JsonStringEnumConverter):
+// "Available", "InUse", "Maintenance", "CalibrationDue", "OutOfService".
+// Estos helpers aceptan tanto el texto del backend como el número del frontend.
+const EQUIPMENT_STATUS_BY_NAME: Record<string, 0 | 1 | 2 | 3 | 4> = {
+  Available: 0,
+  InUse: 1,
+  Maintenance: 2,
+  CalibrationDue: 3,
+  OutOfService: 4,
+};
+
+export const normalizeEquipmentStatus = (status: unknown): 0 | 1 | 2 | 3 | 4 => {
+  if (typeof status === 'number' && status >= 0 && status <= 4) {
+    return status as 0 | 1 | 2 | 3 | 4;
+  }
+  if (typeof status === 'string') {
+    if (/^\d+$/.test(status)) return normalizeEquipmentStatus(Number(status));
+    const byName = EQUIPMENT_STATUS_BY_NAME[status];
+    if (byName !== undefined) return byName;
+  }
+  return 0;
+};
+
+// Mismo caso para HazardLevel: "None", "Low", "Moderate", "High", "Extreme".
+const HAZARD_LEVEL_BY_NAME: Record<string, 0 | 1 | 2 | 3 | 4> = {
+  None: 0,
+  Low: 1,
+  Moderate: 2,
+  High: 3,
+  Extreme: 4,
+};
+
+export const normalizeHazardLevel = (level: unknown): 0 | 1 | 2 | 3 | 4 => {
+  if (typeof level === 'number' && level >= 0 && level <= 4) {
+    return level as 0 | 1 | 2 | 3 | 4;
+  }
+  if (typeof level === 'string') {
+    if (/^\d+$/.test(level)) return normalizeHazardLevel(Number(level));
+    const byName = HAZARD_LEVEL_BY_NAME[level];
+    if (byName !== undefined) return byName;
+  }
+  return 0;
+};

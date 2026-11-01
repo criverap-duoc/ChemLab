@@ -1,3 +1,0 @@
-Comando .NET:
-
-dotnet run --project src\ChemLab.API\ChemLab.API.csproj

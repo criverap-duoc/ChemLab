@@ -1,0 +1,100 @@
+# .clinerules — ChemLab (Cline + DeepSeek)
+
+## 0. Idioma y formato
+- Responde SIEMPRE en español. Nunca en chino, inglés ni otro idioma.
+- Informes finales: máx. 10 líneas, con viñetas.
+- Nunca repitas el contenido completo de un archivo ya leído; cita solo la línea modificada.
+
+## 1. Regla de oro: no romper lo que funciona
+- Antes de modificar, leer el archivo completo con `read_file`.
+- Antes de eliminar, verificar que no haya referencias (`grep` interno o búsqueda manual).
+- Nunca refactorizar estructura de carpetas sin confirmación explícita del usuario.
+- Nunca cambiar `TargetFramework` ni versiones de paquetes sin autorización.
+
+## 2. Estructura del proyecto (memorizar, no re-explorar)
+Backend:
+- `src/ChemLab.Domain/Entities/*.cs` → entidades
+- `src/ChemLab.Domain/Enums/*.cs` → enums
+- `src/ChemLab.Application/DTOs/*.cs` → DTOs
+- `src/ChemLab.Application/DependencyInjection.cs` → registro de MediatR/AutoMapper
+- `src/ChemLab.Infrastructure/Data/ApplicationDbContext.cs` → DbSets + OnModelCreating
+- `src/ChemLab.Infrastructure/DependencyInjection.cs` → EF, Redis, SQLite
+- `src/ChemLab.Infrastructure/Migrations/*.cs` → migraciones EF
+- `src/ChemLab.API/Program.cs` → composición raíz (no tocar sin ver el archivo completo)
+- `src/ChemLab.API/Endpoints/*Endpoints.cs` → Minimal APIs por recurso
+- `src/ChemLab.API/Hubs/NotificationHub.cs` → SignalR
+- `src/ChemLab.API/Services/NotificationService.cs` → notificaciones
+- `src/ChemLab.API/Services/NotificationBackgroundService.cs` → tareas periódicas
+- `src/ChemLab.API/appsettings*.json` → connection strings y CORS
+
+Frontend:
+- `frontend/src/components/[feature]/*.tsx` → componentes por feature
+- `frontend/src/services/*.ts` → servicios API
+- `frontend/src/types/*.ts` → tipos e interfaces
+- `frontend/src/hooks/*.ts` → custom hooks
+- `frontend/src/theme.ts` → tema MUI + modo oscuro
+- `frontend/src/App.tsx` → rutas
+
+## 3. Convenciones
+- DTOs nunca exponen entidades de dominio.
+- Endpoints NO usan `[Authorize]` atributos: usan `.RequireAuthorization()`.
+- Los enums se serializan como string en JSON (`AddJsonOptions`).
+- En frontend, nunca `any`; usar tipos de `frontend/src/types/`.
+- MUI + React Query. Sin Redux. Sin Tailwind.
+- Fechas: `date-fns` con locale `es`.
+- Paquetes: usar SIEMPRE `pnpm`. PROHIBIDO `npm install` y `npm ci`.
+- Lockfile oficial: `pnpm-lock.yaml`. Ignorar `package-lock.json` y `yarn.lock`.
+- Instalación inicial: `pnpm install --frozen-lockfile` si existe `pnpm-lock.yaml`.
+- Añadir dependencia: `pnpm add <paquete>[@version]`.
+- Scripts: `pnpm run build`, `pnpm run start`, `pnpm run test`.
+- Si el repo tiene `package-lock.json`, tratarlo como basura y agregarlo a `.gitignore`.
+- Si `pnpm` no está instalado, pedir al usuario autorización antes de ejecutar `npm install -g pnpm` o `corepack enable`.
+
+## 4. Reglas de tarea
+- Una tarea = un objetivo verificable.
+- Si la tarea es grande, dividirla en subpasos dentro del mismo mensaje (no micro-tareas al usuario).
+- Al finalizar cada tarea, incluir en el mismo turno:
+  1. `dotnet build` (backend) o `npm run build` (frontend) → confirmar 0 errores.
+  2. Si todo compila: `git add . && git commit -m "<tipo>: <descripción>" && git push origin develop`
+  3. Si quedan fixes pendientes: listarlos al final y comprometerlos para el siguiente turno (no abrir microtarea).
+- Rama de trabajo: `develop`. Nunca `main` sin autorización.
+
+## 5. Diagnóstico antes de tocar
+Si el usuario reporta un error:
+1. Pedir (o leer) el log exacto.
+2. Revisar los 3 archivos más probables (endpoint → DTO → componente).
+3. Proponer hipótesis y pedir confirmación antes de escribir.
+
+## 6. Responsive
+- Toda vista nueva debe usar `Grid` de MUI con breakpoints (`xs`, `md`, `lg`).
+- En móvil: `Drawer` temporal, no `AppBar` fija con menú inline.
+- Probar mentalmente a 360px y 768px antes de entregar.
+
+## 7. Prohibiciones explícitas
+- No crear migraciones automáticamente sin avisar.
+- No borrar archivos.
+- No modificar `bin/`, `obj/`, `node_modules/`.
+- No instalar paquetes sin listar versión exacta y pedir OK.
+- No responder en otro idioma que no sea español.
+- No inventar rutas ni nombres de archivo: si no está en la sección 2, preguntar.
+- No usar `npm`, `yarn` ni `npx` en este proyecto. Solo `pnpm`.
+- No regenerar `package-lock.json`. Si aparece, marcarlo como basura.
+
+## 8. Archivos de referencia rápida (leer si hay duda)
+- `PROJECT_INDEX.md` (si existe) → índice completo de archivos
+- `README.md` → descripción funcional
+- `frontend/package.json` → versiones React/MUI/TS
+- `src/ChemLab.API/Program.cs` → cadena de middlewares
+
+## 9. Deploy (cuando aplique)
+- Backend: Render / Fly.io / Railway free tier → SQLite persistente NO es viable; usar PostgreSQL free tier.
+- Frontend: Vercel (ya usado por el usuario).
+- CORS del backend debe incluir el dominio de Vercel.
+- Variables de entorno: `ConnectionStrings__DefaultConnection`, `ASPNETCORE_ENVIRONMENT=Production`.
+
+## 10. Informe final obligatorio (máx. 10 líneas)
+- Qué se hizo (1 línea)
+- Archivos tocados (1 línea por archivo, máx. 5)
+- Build status (1 línea)
+- Commit aplicado (sí/no + hash corto)
+- Pendientes para el siguiente turno (viñetas, máx. 3)

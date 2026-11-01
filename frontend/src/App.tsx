@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { Login } from './components/auth/Login';
@@ -13,16 +13,28 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { getTheme, ThemeContext } from './theme';
 import { PERMISSIONS } from './types';
 import { RoleTester } from './components/debug/RoleTester';
+import { ExperimentList } from './components/experiments/ExperimentList';
+import { ReportsDashboard } from './components/reports/ReportsDashboard';
+import { RequestList } from './components/requests/RequestList';
+
 
 const queryClient = new QueryClient();
 
 function App() {
-  const [mode, setMode] = useState<'light' | 'dark'>('light');
+  // El tema se persiste en localStorage para sobrevivir a recargas y logins.
+  const [mode, setMode] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('theme-mode');
+    return saved === 'dark' ? 'dark' : 'light';
+  });
 
   const theme = React.useMemo(() => getTheme(mode), [mode]);
 
   const toggleTheme = () => {
-    setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+    setMode((prev) => {
+      const next = prev === 'light' ? 'dark' : 'light';
+      localStorage.setItem('theme-mode', next);
+      return next;
+    });
   };
 
   const themeContextValue = React.useMemo(
@@ -95,6 +107,36 @@ function App() {
                   <ProtectedRoute>
                     <MainLayout>
                       <RoleTester />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/experiments"
+                element={
+                  <ProtectedRoute requiredPermissions={[PERMISSIONS.VIEW_EXPERIMENT]}>
+                    <MainLayout>
+                      <ExperimentList />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reports"
+                element={
+                  <ProtectedRoute requiredPermissions={[PERMISSIONS.VIEW_REPORTS]}>
+                    <MainLayout>
+                      <ReportsDashboard />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/requests"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <RequestList />
                     </MainLayout>
                   </ProtectedRoute>
                 }

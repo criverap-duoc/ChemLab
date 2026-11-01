@@ -16,10 +16,7 @@ import {
   Avatar,
   Menu,
   MenuItem,
-  Switch,
-  Badge,
   Tooltip,
-  useTheme,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -30,11 +27,15 @@ import {
   Logout as LogoutIcon,
   Brightness4 as DarkModeIcon,
   Brightness7 as LightModeIcon,
-  Notifications as NotificationsIcon,
   Person as PersonIcon,
+  Assessment as AssessmentIcon,
+  Assignment as RequestIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme as useAppTheme } from '../../theme';
+import { NotificationBell } from '../notifications/NotificationBell';
+import { authService } from '../../services/authService';
+
 
 const drawerWidth = 280;
 
@@ -48,17 +49,34 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [notificationsAnchor, setNotificationsAnchor] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const theme = useTheme();
   const { mode, toggleTheme } = useAppTheme();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
+  // Logout limpio: cierra sesión en backend (sin bloquear si falla) y limpia
+  // el estado local antes de volver al login.
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Error al cerrar sesión en el servidor:', error);
+    } finally {
+      localStorage.removeItem('user');
+      localStorage.removeItem('permissions');
+      setAnchorEl(null);
+      navigate('/login');
+    }
+  };
+
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     { text: 'Reactivos', icon: <ScienceIcon />, path: '/reagents' },
     { text: 'Equipos', icon: <BiotechIcon />, path: '/equipment' },
+    { text: 'Experimentos', icon: <ScienceIcon />, path: '/experiments' },
+    { text: 'Reportes', icon: <AssessmentIcon />, path: '/reports' },
+    { text: 'Solicitudes', icon: <RequestIcon />, path: '/requests' },
   ];
 
   const drawer = (
@@ -117,22 +135,28 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           boxShadow: 1,
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ px: { xs: 1, sm: 2, md: 3 }, gap: { xs: 0.5, sm: 1 } }}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
+            sx={{ mr: { xs: 0.5, sm: 2 }, display: { sm: 'none' }, flexShrink: 0 }}
           >
             <MenuIcon />
           </IconButton>
 
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          {/* minWidth: 0 permite que el título truncado ceda espacio a los iconos en xs */}
+          <Typography
+            variant="h6"
+            noWrap
+            component="div"
+            sx={{ flexGrow: 1, minWidth: 0, fontSize: { xs: '1rem', sm: '1.25rem' } }}
+          >
             {menuItems.find(item => item.path === location.pathname)?.text || 'ChemLab'}
           </Typography>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.25, sm: 1 }, flexShrink: 0 }}>
             {/* Switch de modo oscuro */}
             <Tooltip title={`Cambiar a modo ${mode === 'light' ? 'oscuro' : 'claro'}`}>
               <IconButton onClick={toggleTheme} color="inherit">
@@ -140,17 +164,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               </IconButton>
             </Tooltip>
 
-            {/* Notificaciones */}
-            <Tooltip title="Notificaciones">
-              <IconButton
-                color="inherit"
-                onClick={(e) => setNotificationsAnchor(e.currentTarget)}
-              >
-                <Badge badgeContent={3} color="error">
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
-            </Tooltip>
+            <NotificationBell />
+
+
 
             {/* Menú de usuario */}
             <Tooltip title="Perfil">
@@ -232,7 +248,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           <ListItemText primary="Configuración" />
         </MenuItem>
         <Divider />
-        <MenuItem onClick={() => navigate('/login')}>
+        <MenuItem onClick={handleLogout}>
           <ListItemIcon>
             <LogoutIcon fontSize="small" color="error" />
           </ListItemIcon>
@@ -280,7 +296,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          /* minWidth: 0 evita que el contenido empuje el flex container y genere scroll horizontal en xs */
+          minWidth: 0,
+          p: { xs: 2, sm: 3 },
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           minHeight: '100vh',
           bgcolor: 'background.default',

@@ -1,9 +1,12 @@
+//ChemLabBackend\src\ChemLab.API\Endpoints\EquipmentEndpoints.cs
 using ChemLab.Application.DTOs;
 using ChemLab.Domain.Entities;
 using ChemLab.Domain.Enums;
 using ChemLab.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ChemLab.API.Services;
+using System.Security.Claims;
 
 namespace ChemLab.API.Endpoints;
 
@@ -36,11 +39,25 @@ public static class EquipmentEndpoints
 
     private static async Task<IResult> GetAllEquipment(
         ApplicationDbContext context,
+        HttpContext httpContext,  // <-- AGREGAR
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        var equipment = await context.Equipment
+        var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
+            return Results.Unauthorized();
+
+        // ADMIN y LAB_MANAGER ven todo el inventario; RESEARCHER y LAB_TECH solo lo propio
+        var canViewAll = httpContext.User.IsInRole("ADMIN") || httpContext.User.IsInRole("LAB_MANAGER");
+
+        var query = context.Equipment
             .Where(e => e.IsActive)
+            .AsQueryable();
+
+        if (!canViewAll)
+            query = query.Where(e => e.CreatedById == userId);
+
+        var equipment = await query
             .Include(e => e.CreatedBy)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -59,7 +76,7 @@ public static class EquipmentEndpoints
             })
             .ToListAsync();
 
-        var totalCount = await context.Equipment.CountAsync(e => e.IsActive);
+        var totalCount = await query.CountAsync();
 
         return Results.Ok(new
         {
@@ -131,7 +148,8 @@ public static class EquipmentEndpoints
     private static async Task<IResult> UpdateEquipment(
         Guid id,
         [FromBody] UpdateEquipmentDto dto,
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        INotificationService notificationService)
     {
         var equipment = await context.Equipment.FindAsync(id);
 
@@ -148,6 +166,12 @@ public static class EquipmentEndpoints
         equipment.UpdatedAt = DateTime.UtcNow;
 
         await context.SaveChangesAsync();
+
+        // 🔥 Verificar calibración después de actualizar
+        if (equipment.NextCalibration.HasValue)
+        {
+            await notificationService.NotifyCalibrationDue(equipment);
+        }
 
         return Results.Ok(new { Message = "Equipment updated successfully" });
     }

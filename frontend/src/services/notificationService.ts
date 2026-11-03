@@ -87,6 +87,8 @@ class NotificationService {
     this.connection = new signalR.HubConnectionBuilder()
       // F7b: misma base que axios; withCredentials envía la cookie de sesión
       // en el negotiate y en la conexión del hub.
+      // F9.5: API_BASE_URL ya resuelve REACT_APP_API_URL (ver api.ts), así que
+      // local y Vercel usan el mismo origen sin tocar este archivo.
       .withUrl(`${API_BASE_URL}/hubs/notifications`, {
         withCredentials: true
       })

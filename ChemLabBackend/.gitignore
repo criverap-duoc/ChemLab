@@ -1,7 +1,8 @@
 # .NET
 bin/
 obj/
-appsettings.Production.json
+# F9.4: appsettings.Production.json YA se versiona (solo placeholders; los secretos
+# reales vienen de env vars de Render, p.ej. ConnectionStrings__DefaultConnection).
 *.user
 *.suo
 *.db

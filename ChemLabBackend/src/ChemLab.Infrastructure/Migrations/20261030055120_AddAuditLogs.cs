@@ -15,17 +15,17 @@ namespace ChemLab.Infrastructure.Migrations
                 name: "AuditLogs",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "TEXT", nullable: false),
-                    EntityType = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    EntityId = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    Action = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    UserId = table.Column<string>(type: "TEXT", nullable: true),
-                    UserName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    OldValue = table.Column<string>(type: "TEXT", nullable: true),
-                    NewValue = table.Column<string>(type: "TEXT", nullable: true),
-                    IpAddress = table.Column<string>(type: "TEXT", maxLength: 64, nullable: true),
-                    UserAgent = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true)
+                    Id = table.Column<string>(nullable: false),
+                    EntityType = table.Column<string>(maxLength: 50, nullable: false),
+                    EntityId = table.Column<string>(maxLength: 100, nullable: false),
+                    Action = table.Column<string>(maxLength: 50, nullable: false),
+                    UserId = table.Column<string>(nullable: true),
+                    UserName = table.Column<string>(maxLength: 200, nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    OldValue = table.Column<string>(nullable: true),
+                    NewValue = table.Column<string>(nullable: true),
+                    IpAddress = table.Column<string>(maxLength: 64, nullable: true),
+                    UserAgent = table.Column<string>(maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {

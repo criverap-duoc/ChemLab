@@ -1,0 +1,22 @@
+# F9.4 — Infrastructure as Code para Render (backend Docker).
+# Nota: el campo oficial actual es `runtime: docker` (antes `env: docker`).
+# La connection string de Supabase NO se versiona: se carga en el dashboard.
+services:
+  - type: web
+    name: chemlab-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      # sync: false -> Render lo pide en el dashboard (secreto, no en el repo)
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+      # Placeholder: sustituir por el dominio real de Vercel antes del deploy.
+      - key: AllowedOrigins__0
+        value: https://chemlab.vercel.app

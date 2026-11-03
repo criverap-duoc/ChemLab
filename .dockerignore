@@ -1,0 +1,57 @@
+# F9.4 — Exclusiones del contexto de build (raíz del repo).
+
+# ---------- Artefactos .NET ----------
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+
+# ---------- Base de datos local / backups ----------
+*.db
+**/*.db
+*.db.old
+**/*.db.old
+*.db.bak*
+**/*.db.bak*
+*.db-shm
+**/*.db-shm
+*.db-wal
+**/*.db-wal
+
+# ---------- Logs ----------
+Logs/
+**/Logs/
+*.log
+**/*.log
+
+# ---------- Frontend ----------
+node_modules/
+**/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.next/
+pnpm-store/
+
+# ---------- VCS / IDE ----------
+.git/
+.gitignore
+.vs/
+**/.vs/
+.idea/
+**/.idea/
+.vscode/
+**/.vscode/
+.history/
+**/.history/
+
+# ---------- Temporales / tests ----------
+%TEMP%/
+tmp/
+**/TestResults/
+
+# ---------- Secretos y basura local ----------
+.env
+.env.*
+!.env.example
+cookies.txt
+pg.txt

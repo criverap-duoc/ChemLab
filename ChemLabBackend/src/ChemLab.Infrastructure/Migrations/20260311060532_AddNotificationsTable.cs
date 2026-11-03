@@ -15,14 +15,14 @@ namespace ChemLab.Infrastructure.Migrations
                 name: "Notifications",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Message = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
-                    Type = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    IsRead = table.Column<bool>(type: "INTEGER", nullable: false),
-                    UserId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Data = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<Guid>(nullable: false),
+                    Title = table.Column<string>(maxLength: 200, nullable: false),
+                    Message = table.Column<string>(maxLength: 500, nullable: false),
+                    Type = table.Column<string>(maxLength: 50, nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    IsRead = table.Column<bool>(nullable: false),
+                    UserId = table.Column<Guid>(nullable: false),
+                    Data = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {

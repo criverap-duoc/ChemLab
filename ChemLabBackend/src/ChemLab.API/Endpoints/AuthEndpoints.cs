@@ -41,7 +41,7 @@ public static class AuthEndpoints
             return Results.BadRequest(result.Errors);
         });
 
-        group.MapPost("/login", async (LoginRequest request, SignInManager<User> signInManager, UserManager<User> userManager, ApplicationDbContext context) =>
+        group.MapPost("/login", async (LoginRequest request, SignInManager<User> signInManager, UserManager<User> userManager, ApplicationDbContext context, ILoggerFactory loggerFactory) =>
         {
             // Validar datos de entrada
             if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
@@ -62,20 +62,34 @@ public static class AuthEndpoints
                 // Identity/UserManager.GetRolesAsync() devolvía vacío con este modelo
                 // (Guid + converter), así que el rol se resuelve aquí directamente.
                 // OJO EF Core 8: SqlQueryRaw<T> escalar exige que la columna se llame "Value".
+                //
+                // F9.7a: los identificadores van entre COMILLAS DOBLES. Postgres crea las
+                // tablas como "AspNetUserRoles"/"AspNetRoles" (PascalCase); sin comillas las
+                // baja a minúsculas y responde 42P01 "relation aspnetuserroles does not exist"
+                // (ese fallo caía en el catch y producía el rol RESEARCHER por defecto).
+                // El Guid se envía como texto en minúsculas ({0}) y la columna se castea a TEXT:
+                // en SQLite UserId es TEXT en minúsculas (GuidToStringConverter) y en Postgres
+                // es uuid, donde LOWER(uuid) no existe y daría 42883. CAST(... AS TEXT) es
+                // válido en ambos motores, igual que las comillas dobles.
                 var userId = user.Id;
                 List<string> roleNames;
                 try
                 {
                     roleNames = await context.Database
                         .SqlQueryRaw<string>(
-                            "SELECT r.Name AS Value FROM AspNetUserRoles ur " +
-                            "JOIN AspNetRoles r ON ur.RoleId = r.Id " +
-                            "WHERE LOWER(ur.UserId) = LOWER({0})", userId)
+                            "SELECT r.\"Name\" AS \"Value\" " +
+                            "FROM \"AspNetUserRoles\" ur " +
+                            "JOIN \"AspNetRoles\" r ON ur.\"RoleId\" = r.\"Id\" " +
+                            "WHERE LOWER(CAST(ur.\"UserId\" AS TEXT)) = LOWER({0})",
+                            userId.ToString())
                         .ToListAsync();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     // Fallback: si el SQL falla, el usuario entra como RESEARCHER.
+                    // F9.7a: el fallo ya no es silencioso (antes ocultó el 42P01 en Render).
+                    loggerFactory.CreateLogger("ChemLab.API.Auth")
+                        .LogError(ex, "No se pudieron leer los roles del usuario {UserId}; se aplica el fallback RESEARCHER.", userId);
                     roleNames = new List<string>();
                 }
 

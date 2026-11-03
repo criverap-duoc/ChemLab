@@ -34,31 +34,18 @@
 
 ## 🖼️ Capturas
 
-> Reemplaza cada bloque con tu GIF o PNG. Rutas sugeridas: `screenshots/<nombre>.gif`.
 
-### Login
-![Login](screenshots/login.gif)
+### Login - Notificaciones - Reactivos - Equipos
+![Login](screenshots/Chemlab1.gif)
 
-### Dashboard con datos demo
-![Dashboard](screenshots/dashboard.gif)
+### Equipos - Experimentos - Reportes
+![Dashboard](screenshots/Chemlab2.gif)
 
-### Gestión de reactivos
-![Reactivos](screenshots/reagents.gif)
+### Reportes y Exportación
+![Reactivos](screenshots/Chemlab3.gif)
 
-### Gestión de equipos
-![Equipos](screenshots/equipment.gif)
-
-### Experimentos con reactivos y equipos
-![Experimentos](screenshots/experiments.gif)
-
-### Solicitudes y aprobación
-![Solicitudes](screenshots/requests.gif)
-
-### Notificaciones en tiempo real
-![Notificaciones](screenshots/notifications.gif)
-
-### Reportes (Excel y PDF)
-![Reportes](screenshots/reports.gif)
+### Solicitudes - Búsqueda de Reactivos en PubChem
+![Equipos](screenshots/Chemlab4.gif)
 
 ---
 

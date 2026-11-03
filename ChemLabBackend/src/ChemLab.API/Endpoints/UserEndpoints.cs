@@ -293,9 +293,11 @@ public static class UserEndpoints
         try
         {
             await using var command = connection.CreateCommand();
+            // F9.7a: identificadores entre comillas dobles (Postgres crea "AspNetUserRoles"
+            // y "AspNetRoles"; sin comillas las resuelve en minúsculas -> 42P01).
             command.CommandText =
-                "SELECT ur.UserId, r.Name FROM AspNetUserRoles ur " +
-                "INNER JOIN AspNetRoles r ON ur.RoleId = r.Id";
+                "SELECT ur.\"UserId\", r.\"Name\" FROM \"AspNetUserRoles\" ur " +
+                "INNER JOIN \"AspNetRoles\" r ON ur.\"RoleId\" = r.\"Id\"";
 
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
@@ -328,9 +330,12 @@ public static class UserEndpoints
         CancellationToken cancellationToken)
     {
         // EF Core 8 exige el alias "Value" para SqlQueryRaw escalar.
+        // F9.7a: identificadores entre comillas dobles (Postgres) y CAST a INTEGER porque
+        // COUNT(*) devuelve bigint en Postgres y leerlo como int lanzaría InvalidCastException.
         var count = await context.Database
             .SqlQueryRaw<int>(
-                "SELECT COUNT(*) AS Value FROM AspNetRoles WHERE UPPER(Name) = UPPER({0})",
+                "SELECT CAST(COUNT(*) AS INTEGER) AS \"Value\" " +
+                "FROM \"AspNetRoles\" WHERE UPPER(\"Name\") = UPPER({0})",
                 roleName)
             .SingleAsync(cancellationToken);
 
@@ -344,14 +349,35 @@ public static class UserEndpoints
         string roleName,
         CancellationToken cancellationToken)
     {
+        // F9.7a: identificadores entre comillas dobles (Postgres crea "AspNetUserRoles" y
+        // "AspNetRoles"; sin comillas -> 42P01). El Guid viaja como texto en minúsculas y la
+        // columna se castea a TEXT porque en Postgres UserId es uuid (LOWER(uuid) -> 42883).
         await context.Database.ExecuteSqlRawAsync(
-            "DELETE FROM AspNetUserRoles WHERE LOWER(UserId) = LOWER({0})",
+            "DELETE FROM \"AspNetUserRoles\" " +
+            "WHERE LOWER(CAST(\"UserId\" AS TEXT)) = LOWER({0})",
             new object[] { userId.ToString() },
             cancellationToken);
 
+        // F9.1/F9.7a: el INSERT sí depende del proveedor porque el tipo de UserId cambia
+        // (uuid en Postgres, TEXT en SQLite) y no existe un cast común para ambos.
+        var isPostgres = context.Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true;
+
+        if (isPostgres)
+        {
+            await context.Database.ExecuteSqlRawAsync(
+                "INSERT INTO \"AspNetUserRoles\" (\"UserId\", \"RoleId\") " +
+                "SELECT CAST({0} AS uuid), \"Id\" FROM \"AspNetRoles\" " +
+                "WHERE UPPER(\"Name\") = UPPER({1})",
+                new object[] { userId.ToString(), roleName },
+                cancellationToken);
+
+            return;
+        }
+
         await context.Database.ExecuteSqlRawAsync(
-            "INSERT INTO AspNetUserRoles (UserId, RoleId) " +
-            "SELECT {0}, Id FROM AspNetRoles WHERE UPPER(Name) = UPPER({1})",
+            "INSERT INTO \"AspNetUserRoles\" (\"UserId\", \"RoleId\") " +
+            "SELECT {0}, \"Id\" FROM \"AspNetRoles\" " +
+            "WHERE UPPER(\"Name\") = UPPER({1})",
             new object[] { userId.ToString(), roleName },
             cancellationToken);
     }

@@ -4,7 +4,15 @@ import axios from 'axios';
 // F7b: URL absoluta del backend. Con baseURL relativa ('/api') el dev-server de
 // CRA hacía de proxy y la cookie de sesión no viajaba correctamente.
 // Exportamos el host para reutilizarlo en SignalR (notificationService.ts).
-export const API_BASE_URL = 'http://localhost:5000';
+//
+// F9.5: la base ya no está hardcodeada. En local CRA la inyecta desde
+// frontend/.env.local (REACT_APP_API_URL); en Vercel se define como Environment
+// Variable del proyecto (se compila en build time). El fallback conserva el
+// flujo de desarrollo si la variable no existe. Se recorta la barra final para
+// no generar rutas tipo '//api' cuando alguien pega la URL con '/'.
+export const API_BASE_URL = (
+  process.env.REACT_APP_API_URL || 'http://localhost:5000'
+).replace(/\/+$/, '');
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,

@@ -25,6 +25,7 @@ obj/
 .env.*
 !.env.example
 cookies.txt
+pg.txt
 Run dotnet.txt
 
 # ---------- Lockfiles no oficiales (el oficial es pnpm-lock.yaml) ----------

@@ -96,13 +96,24 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp", policy =>
     {
+        // F9.4: los orígenes permitidos se leen de configuración ("AllowedOrigins"), así el
+        // dominio del frontend se cambia desde el dashboard/env sin recompilar la imagen.
+        // Render inyecta el array como variables de entorno: AllowedOrigins__0, __1, ...
+        var configuredOrigins = builder.Configuration
+            .GetSection("AllowedOrigins")
+            .Get<string[]>()?
+            .Where(origin => !string.IsNullOrWhiteSpace(origin))
+            .ToArray() ?? [];
+
         // F9.2: fuera de Production (Development, Postgres, Staging) se aceptan los dos
         // orígenes locales: el frontend (3000) y la propia API servida en 5000 (Smoke tests
-        // / Swagger / SignalR desde el navegador). En Production se mantiene el
-        // comportamiento anterior para no romper el deploy actual.
-        var allowedOrigins = builder.Environment.IsProduction()
-            ? new[] { "http://localhost:3000" }
-            : new[] { "http://localhost:3000", "http://localhost:5000" };
+        // / Swagger / SignalR desde el navegador). En Production, si no hay nada configurado,
+        // no se habilita CORS cruzado (no se cae a localhost).
+        var allowedOrigins = configuredOrigins.Length > 0
+            ? configuredOrigins
+            : builder.Environment.IsProduction()
+                ? Array.Empty<string>()
+                : new[] { "http://localhost:3000", "http://localhost:5000" };
 
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()

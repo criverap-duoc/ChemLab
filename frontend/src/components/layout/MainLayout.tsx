@@ -31,7 +31,7 @@ import {
   Assessment as AssessmentIcon,
   Assignment as RequestIcon,
 } from '@mui/icons-material';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { useTheme as useAppTheme } from '../../theme';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { authService } from '../../services/authService';
@@ -81,12 +81,70 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   const drawer = (
     <Box>
-      <Toolbar sx={{ justifyContent: 'center', py: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-          ChemLab 🧪
-        </Typography>
+      <Toolbar sx={{ px: 2, py: 2, minHeight: 72 }}>
+        <Box
+          component={RouterLink}
+          to="/dashboard"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Ir al dashboard de ChemLab"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            textDecoration: 'none',
+            width: '100%',
+            borderRadius: 2,
+            p: 1,
+            transition: 'background-color 0.2s',
+            '&:hover': {
+              bgcolor: 'action.hover',
+            },
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 40,
+              height: 40,
+              borderRadius: 2,
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+              boxShadow: 1,
+              flexShrink: 0,
+            }}
+          >
+            <ScienceIcon sx={{ fontSize: 24 }} />
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 700,
+                color: 'primary.main',
+                lineHeight: 1.2,
+                fontSize: '1.15rem',
+                letterSpacing: '-0.3px',
+              }}
+            >
+              ChemLab
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'text.secondary',
+                lineHeight: 1.2,
+                fontSize: '0.7rem',
+                display: 'block',
+              }}
+            >
+              Gestión de laboratorio
+            </Typography>
+          </Box>
+        </Box>
       </Toolbar>
-      <Divider />
+      <Divider sx={{ mt: 1 }} />
       <List>
         {menuItems.map((item) => (
           <ListItem key={item.text} disablePadding>

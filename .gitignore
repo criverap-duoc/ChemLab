@@ -25,6 +25,8 @@ obj/
 .env.*
 !.env.example
 cookies.txt
+prod.txt
+prod_admin.txt
 pg.txt
 Run dotnet.txt
 

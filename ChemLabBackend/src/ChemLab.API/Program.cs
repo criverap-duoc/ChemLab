@@ -194,6 +194,8 @@ app.MapAuthEndpoints();
 app.MapReagentsEndpoints();
 app.MapEquipmentEndpoints();
 app.MapSetupEndpoints();
+// F9.7b: seed de datos de demostración (POST /api/setup/seed-demo, policy AdminOnly).
+app.MapSeedEndpoints();
 app.MapExperimentEndpoints();
 app.MapRequestEndpoints();
 app.MapHub<NotificationHub>("/hubs/notifications");

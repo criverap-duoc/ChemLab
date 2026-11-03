@@ -2,87 +2,126 @@
 
 [![Backend](https://img.shields.io/badge/backend-live-success)](https://chemlab-vozz.onrender.com/api/health)
 [![Frontend](https://img.shields.io/badge/frontend-live-success)](https://chemlab-theta.vercel.app)
-[![Release](https://img.shields.io/badge/release-v1.1.0-blue)](https://github.com/criverap-duoc/ChemLab/releases)
+[![Release](https://img.shields.io/badge/release-v1.1.1-blue)](https://github.com/criverap-duoc/ChemLab/releases)
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![EF Core](https://img.shields.io/badge/EF_Core-8.0-512BD4)](https://learn.microsoft.com/ef/core/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)](https://www.postgresql.org/)
 [![React](https://img.shields.io/badge/React-18.2-61DAFB?logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-4.9-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 [![MUI](https://img.shields.io/badge/MUI-5.18-007FFF?logo=mui)](https://mui.com/)
-[![SQLite](https://img.shields.io/badge/SQLite-3-003B57?logo=sqlite)](https://www.sqlite.org/)
 [![SignalR](https://img.shields.io/badge/SignalR-tiempo%20real-512BD4)](https://learn.microsoft.com/aspnet/core/signalr/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](#-licencia)
 
-## 📌 Estado del proyecto: v1.0.0
+## 🌐 Demo en producción
 
-**Release inicial.** La rama `develop` se promovió a `main` con el tag `v1.0.0`
-(backend .NET 8 + EF Core + SQLite y frontend React + TypeScript + MUI completos).
+| Componente | URL | Estado |
+| --- | --- | :---: |
+| **Frontend** | [chemlab-theta.vercel.app](https://chemlab-theta.vercel.app) | ✅ |
+| **Backend API** | [chemlab-vozz.onrender.com](https://chemlab-vozz.onrender.com) | ✅ |
+| **Swagger** | [/swagger](https://chemlab-vozz.onrender.com/swagger) | ✅ |
+| **Health check** | [/api/health](https://chemlab-vozz.onrender.com/api/health) | ✅ |
+
+### Credenciales demo
+
+| Rol | Email | Password |
+| --- | --- | --- |
+| ADMIN | `admin@chemlab.com` | `Admin123!` |
+| RESEARCHER | `demo@chemlab.com` | `Demo123!` |
+
+> ⚠️ **Free tier**: Render duerme el backend tras 15 min de inactividad. El primer request tarda ~30 s.
+
+---
+
+## 🖼️ Capturas
+
+> Reemplaza cada bloque con tu GIF o PNG. Rutas sugeridas: `screenshots/<nombre>.gif`.
+
+### Login
+![Login](screenshots/login.gif)
+
+### Dashboard con datos demo
+![Dashboard](screenshots/dashboard.gif)
+
+### Gestión de reactivos
+![Reactivos](screenshots/reagents.gif)
+
+### Gestión de equipos
+![Equipos](screenshots/equipment.gif)
+
+### Experimentos con reactivos y equipos
+![Experimentos](screenshots/experiments.gif)
+
+### Solicitudes y aprobación
+![Solicitudes](screenshots/requests.gif)
+
+### Notificaciones en tiempo real
+![Notificaciones](screenshots/notifications.gif)
+
+### Reportes (Excel y PDF)
+![Reportes](screenshots/reports.gif)
+
+---
+
+## 📌 Estado del proyecto: v1.1.1
+
+**Release actual.** Backend .NET 8 + EF Core + PostgreSQL (prod) / SQLite (dev) y frontend React + TypeScript + MUI, desplegados en Render + Vercel + Supabase. Seed demo incluido.
 
 ### Checklist de features
 
 | Módulo | Estado | Detalle |
 | --- | :---: | --- |
-| Autenticación y sesión | ✅ | ASP.NET Identity + cookies, registro/login/logout, sesión cross-origin en dev |
-| Roles y permisos | ✅ | `ADMIN`, `LAB_MANAGER`, `RESEARCHER`, `LAB_TECH` (permisos en frontend + políticas en API) |
-| Reactivos | ✅ | CRUD, stock mínimo con alertas, nivel GHS, vencimiento, autocompletado PubChem |
-| Equipos | ✅ | CRUD, última/próxima calibración, estados con colores |
-| Experimentos | ✅ | Alta con reactivos y equipos, descuento de stock, estados, protocolo y resultados |
-| Solicitudes | ✅ | Flujo pendiente/aprobada/rechazada, prioridades, ítems de reactivo y equipo |
-| Notificaciones | ✅ | SignalR (`/hubs/notifications`) + persistencia + `NotificationBackgroundService` |
-| Reportes | ✅ | Dashboard con gráficos, exportación a Excel y PDF |
-| Trazabilidad | ✅ | Historial por entidad: `/api/traceability/history/{entityType}/{entityId}` |
-| Auditoría automática (F8.1) | ✅ | `AuditMiddleware` registra CREATE/UPDATE/DELETE en `AuditLogs` (usuario, IP, user agent, body) |
-| Gestión de usuarios (F8.2) | ✅ | `/api/users`: listar, cambiar rol, cambiar estado, baja lógica — policy `AdminOnly` |
-| Verificación final (F8.3) | ✅ | `dotnet build` 0 errores · `tsc --noEmit` 0 errores · `pnpm run build` OK · 6 migraciones aplicadas |
-| Despliegue productivo | ⏳ | Fuera del alcance de v1.0.0 (PostgreSQL + CI/CD) |
-| Cobertura de pruebas | ⏳ | Proyectos de test creados; cobertura aún no medida |
+| Autenticación y sesión | ✅ | ASP.NET Identity + cookies, registro/login/logout, sesión cross-origin |
+| Roles y permisos | ✅ | `ADMIN`, `LAB_MANAGER`, `RESEARCHER`, `LAB_TECH` |
+| Reactivos | ✅ | CRUD, stock mínimo, GHS, vencimiento, autocompletado PubChem |
+| Equipos | ✅ | CRUD, calibraciones, estados con colores |
+| Experimentos | ✅ | Reactivos/equipos asociados, descuento de stock, estados, protocolo |
+| Solicitudes | ✅ | Pendiente/aprobada/rechazada, prioridades, ítems |
+| Notificaciones | ✅ | SignalR + persistencia + `NotificationBackgroundService` |
+| Reportes | ✅ | Dashboard con gráficos, exportación Excel y PDF |
+| Trazabilidad | ✅ | `/api/traceability/history/{entityType}/{entityId}` |
+| Auditoría automática | ✅ | `AuditMiddleware` registra CREATE/UPDATE/DELETE en `AuditLogs` |
+| Gestión de usuarios | ✅ | `/api/users` con policy `AdminOnly` |
+| Seed demo | ✅ | 8 reactivos, 4 equipos, 2 experimentos, 2 solicitudes, 2 usuarios |
+| Despliegue productivo | ✅ | Render (backend) + Vercel (frontend) + Supabase (PostgreSQL) |
+| Cobertura de pruebas | ⏳ | Proyectos creados; cobertura aún no medida |
 
 ---
 
 ## 🎯 Problema y solución
 
-Los laboratorios químicos pierden control cuando el stock está desactualizado, la
-trazabilidad no existe, los datos químicos se cargan a mano y las solicitudes internas
-circulan por correo. ChemLab concentra esos cuatro problemas en una sola aplicación:
+Los laboratorios químicos pierden control cuando el stock está desactualizado, la trazabilidad no existe, los datos químicos se cargan a mano y las solicitudes internas circulan por correo. ChemLab concentra esos cuatro problemas:
 
 - Alertas automáticas de stock bajo, calibraciones y vencimientos.
-- Historial de cambios por entidad y auditoría automática de todas las escrituras.
+- Historial de cambios por entidad y auditoría automática de escrituras.
 - Autocompletado de datos químicos desde PubChem (fórmula, peso molecular, CAS, InChI Key).
-- Solicitudes con flujo de aprobación, prioridad y trazabilidad de estados.
+- Solicitudes con flujo de aprobación, prioridad y trazabilidad.
 
 ---
 
 ## ✨ Características
 
 ### 🧪 Reactivos
-CRUD completo, control de stock con mínimo configurable, clasificación por peligro GHS,
-fecha de vencimiento, ubicación y proveedor, más integración con PubChem.
+CRUD completo, control de stock con mínimo configurable, clasificación GHS, fecha de vencimiento, ubicación, proveedor e integración con PubChem.
 
 ### 🔧 Equipos
-CRUD de equipos de laboratorio con estado (disponible, en uso, mantenimiento,
-calibración pendiente, fuera de servicio) y seguimiento de calibraciones.
+CRUD con estado (disponible, en uso, mantenimiento, calibración pendiente, fuera de servicio) y seguimiento de calibraciones.
 
 ### 🧬 Experimentos
-Creación de experimentos asociando reactivos (con cantidad utilizada y descuento de stock)
-y equipos, seguimiento de estado y registro de protocolo/resultados.
+Creación asociando reactivos (con cantidad y descuento de stock) y equipos, seguimiento de estado, protocolo y resultados.
 
 ### 📝 Solicitudes
-Solicitudes de reactivos y equipos con prioridades (baja, media, alta, urgente) y
-aprobación/rechazo por parte de administradores o responsables de laboratorio.
+Solicitudes de reactivos y equipos con prioridades (baja, media, alta, urgente) y flujo de aprobación/rechazo.
 
 ### 🔔 Notificaciones en tiempo real
-Push vía SignalR, guardadas en base de datos, generadas por stock bajo, calibraciones
-próximas, reactivos por vencer y cambios de estado de solicitudes.
+Push vía SignalR, persistidas en base de datos, generadas por stock bajo, calibraciones próximas, reactivos por vencer y cambios de estado.
 
 ### 📊 Reportes
-Dashboard con indicadores y gráficos, exportación a Excel (`xlsx` + `file-saver`) y PDF
-(`jspdf` + `jspdf-autotable`).
+Dashboard con indicadores y gráficos, exportación a Excel (`xlsx` + `file-saver`) y PDF (`jspdf` + `jspdf-autotable`).
 
 ### 🔒 Seguridad, auditoría y trazabilidad
 - Cookies de Identity (sin tokens en localStorage) y CORS con credenciales.
-- `AuditMiddleware` escribe en `AuditLogs` cada POST/PUT/PATCH/DELETE exitoso sobre
-  `/api/reagents`, `/api/equipment`, `/api/experiments` y `/api/requests`.
-- `/api/users` exige la política `AdminOnly`; no se puede degradar ni eliminar al último
-  administrador activo, y tampoco un ADMIN puede quitarse su propio rol.
+- `AuditMiddleware` escribe en `AuditLogs` cada POST/PUT/PATCH/DELETE exitoso.
+- `/api/users` exige policy `AdminOnly`; no se puede degradar ni eliminar al último ADMIN activo.
 
 ---
 
@@ -90,9 +129,9 @@ Dashboard con indicadores y gráficos, exportación a Excel (`xlsx` + `file-save
 
 | Rol | Alcance |
 | --- | --- |
-| **ADMIN** | Acceso total, incluido el panel `/admin/users` |
-| **LAB_MANAGER** | Inventario, experimentos y reportes (sin gestión de usuarios) |
-| **RESEARCHER** | Consulta de inventario y creación/edición de experimentos |
+| **ADMIN** | Acceso total, incluido `/admin/users` |
+| **LAB_MANAGER** | Inventario, experimentos y reportes |
+| **RESEARCHER** | Consulta de inventario y experimentos propios |
 | **LAB_TECH** | Consulta de inventario, calibración de equipos |
 
 ---
@@ -105,54 +144,53 @@ Clean Architecture con dependencias hacia el dominio:
 | --- | --- |
 | `ChemLab.Domain` | Entidades (`Reagent`, `Equipment`, `Experiment`, `Request`, `Notification`, `AuditLog`, `User`) y enums |
 | `ChemLab.Application` | DTOs y registro de MediatR/AutoMapper |
-| `ChemLab.Infrastructure` | `ApplicationDbContext`, migraciones EF Core, DI de EF/Redis/SQLite |
+| `ChemLab.Infrastructure` | `ApplicationDbContext`, migraciones EF Core, DI de EF/Redis/SQLite/Npgsql |
 | `ChemLab.API` | Minimal APIs, `AuditMiddleware`, SignalR, servicios de notificación |
 | `frontend` | React + TypeScript (componentes, servicios, tipos, hooks) |
 
 Endpoints y bases de datos:
 
 - **Minimal APIs** organizadas por recurso en `ChemLabBackend/src/ChemLab.API/Endpoints/`.
-- **SQLite** en desarrollo; la ruta se resuelve contra `ContentRoot` (ver `Program.cs`).
-- **Identity** con `Guid` + `GuidToStringConverter`; los roles se leen con SQL crudo sobre
-  la misma conexión del `DbContext` (limitación documentada en el código, F6.5f).
+- **SQLite** en desarrollo (ruta resuelta contra `ContentRoot`), **PostgreSQL** en producción (Supabase).
+- **Identity** con `Guid` + `GuidToStringConverter`; roles leídos con SQL crudo sobre la misma conexión del `DbContext`.
 
-### Estructura del repositorio
+Estructura del repositorio:
 
-```text
-ChemLab/
-├── ChemLabBackend/
-│   ├── ChemLabInventory.slnx
-│   ├── src/
-│   │   ├── ChemLab.Domain/          # entidades y enums
-│   │   ├── ChemLab.Application/     # DTOs y casos de uso
-│   │   ├── ChemLab.Infrastructure/  # EF Core, DbContext, migraciones
-│   │   └── ChemLab.API/             # Minimal APIs, middleware, SignalR
-│   └── tests/                       # UnitTests e IntegrationTests
-├── frontend/
-│   └── src/
-│       ├── components/              # por feature (auth, reagents, admin, ...)
-│       ├── services/                # cliente axios por recurso
-│       ├── types/                   # tipos e interfaces (sin `any`)
-│       ├── hooks/                   # usePermissions
-│       └── theme.ts                 # tema MUI claro/oscuro
-└── .gitignore
-```
+    ChemLab/
+    ├── ChemLabBackend/
+    │   ├── ChemLabInventory.slnx
+    │   ├── src/
+    │   │   ├── ChemLab.Domain/
+    │   │   ├── ChemLab.Application/
+    │   │   ├── ChemLab.Infrastructure/
+    │   │   └── ChemLab.API/
+    │   └── tests/
+    ├── frontend/
+    │   └── src/
+    │       ├── components/
+    │       ├── services/
+    │       ├── types/
+    │       ├── hooks/
+    │       └── theme.ts
+    ├── Dockerfile
+    ├── render.yaml
+    └── .gitignore
 
 ---
 
 ## 🚀 Tecnologías
 
-**Backend:** .NET 8 · ASP.NET Core Minimal APIs · Entity Framework Core 8 · SQLite ·
-ASP.NET Identity · SignalR · Swagger.
+**Backend:** .NET 8 · ASP.NET Core Minimal APIs · Entity Framework Core 8 · PostgreSQL (prod) / SQLite (dev) · ASP.NET Identity · SignalR · Swagger.
 
-**Frontend:** React 18 · TypeScript 4.9 · MUI 5 · React Query · React Router 6 ·
-React Hook Form + Zod · Recharts · date-fns (locale `es`) · xlsx / jsPDF.
+**Frontend:** React 18 · TypeScript 4.9 · MUI 5 · React Query · React Router 6 · React Hook Form + Zod · Recharts · date-fns (locale `es`) · xlsx / jsPDF.
+
+**Infraestructura:** Render (backend free) · Vercel (frontend free) · Supabase (PostgreSQL free) · Docker.
 
 **Externas:** [PubChem](https://pubchem.ncbi.nlm.nih.gov/) para datos químicos.
 
 ---
 
-## 📦 Instalación (verificada)
+## 📦 Instalación local (verificada)
 
 ### Requisitos
 
@@ -162,47 +200,42 @@ React Hook Form + Zod · Recharts · date-fns (locale `es`) · xlsx / jsPDF.
 
 ### Backend
 
-```bash
-git clone https://github.com/criverap-duoc/ChemLab.git
-cd ChemLab/ChemLabBackend
+    git clone https://github.com/criverap-duoc/ChemLab.git
+    cd ChemLab/ChemLabBackend
 
-dotnet restore
-dotnet ef database update --project src/ChemLab.Infrastructure --startup-project src/ChemLab.API
-dotnet run --project src/ChemLab.API
-```
+    dotnet restore
+    dotnet ef database update --project src/ChemLab.Infrastructure --startup-project src/ChemLab.API
+    dotnet run --project src/ChemLab.API
 
 La API queda en `http://localhost:5000` y Swagger en `http://localhost:5000/swagger`.
 
 ### Frontend
 
-```bash
-cd frontend
-pnpm install --frozen-lockfile
-pnpm start
-```
+    cd frontend
+    pnpm install --frozen-lockfile
+    pnpm start
 
-La aplicación queda en `http://localhost:3000`. El proyecto usa **solo pnpm**: el lockfile
-oficial es `pnpm-lock.yaml` (los `package-lock.json` / `yarn.lock` están ignorados).
+La aplicación queda en `http://localhost:3000`. El proyecto usa **solo pnpm**: el lockfile oficial es `pnpm-lock.yaml`.
 
 ### Primer arranque
 
 1. Inicializar los roles de Identity:
 
-   ```bash
-   curl -X POST http://localhost:5000/api/setup/init-roles
-   ```
+       curl -X POST http://localhost:5000/api/setup/init-roles
 
-2. Registrarse en `http://localhost:3000/register` (el alta asigna `RESEARCHER`).
-3. Promover el primer usuario a `ADMIN` (una sola vez, sobre la BD SQLite de desarrollo):
+2. Registrarse en `http://localhost:3000/register` (asigna `RESEARCHER`).
 
-   ```sql
-   UPDATE AspNetUserRoles
-      SET RoleId = (SELECT Id FROM AspNetRoles WHERE Name = 'ADMIN')
-    WHERE UserId = (SELECT Id FROM AspNetUsers WHERE Email = 'tu@correo.cl');
-   ```
+3. Promover el primer usuario a `ADMIN`:
 
-4. A partir de ahí, la gestión de usuarios se hace desde `/admin/users`
-   o con `/api/users` (policy `AdminOnly`).
+       UPDATE AspNetUserRoles
+          SET RoleId = (SELECT Id FROM AspNetRoles WHERE Name = 'ADMIN')
+        WHERE UserId = (SELECT Id FROM AspNetUsers WHERE Email = 'tu@correo.cl');
+
+4. A partir de ahí, la gestión de usuarios se hace desde `/admin/users` o con `/api/users`.
+
+5. **Datos de ejemplo** (opcional, requiere ADMIN):
+
+       curl -X POST http://localhost:5000/api/setup/seed-demo -b cookies.txt
 
 > Comprobar la salud del backend: `GET http://localhost:5000/api/health` → `{ "status": "Healthy", "version": "1.0.0" }`.
 
@@ -218,59 +251,55 @@ oficial es `pnpm-lock.yaml` (los `package-lock.json` / `yarn.lock` están ignora
 | `GET/POST/PUT/DELETE` | `/api/reagents` | Cookie | CRUD de reactivos |
 | `GET/POST/PUT/DELETE` | `/api/equipment` | Cookie | CRUD de equipos |
 | `GET/POST/PUT/DELETE` | `/api/experiments` | Cookie | Experimentos con reactivos y equipos |
-| `GET/POST/PUT/DELETE` | `/api/requests` | Cookie | Solicitudes y su flujo de aprobación |
+| `GET/POST/PUT/DELETE` | `/api/requests` | Cookie | Solicitudes y flujo de aprobación |
 | `GET` | `/api/notifications/unread` | Cookie | Notificaciones no leídas |
 | `POST` | `/api/notifications/mark-read/{id}` | Cookie | Marcar una como leída |
 | `POST` | `/api/notifications/mark-all-read` | Cookie | Marcar todas como leídas |
-| `GET` | `/api/traceability/history/{entityType}/{entityId}` | Cookie | Historial de cambios de una entidad |
-| `GET` | `/api/users` | **ADMIN** | Listado paginado con rol (`search`, `isActive`) |
-| `PUT` | `/api/users/{id}/role` | **ADMIN** | Cambio de rol (protege al último ADMIN) |
-| `PUT` | `/api/users/{id}/status` | **ADMIN** | Activar / desactivar usuario |
-| `DELETE` | `/api/users/{id}` | **ADMIN** | Baja lógica (`IsActive = false`) |
-| `POST` | `/api/setup/init-roles` | — | Crea los 4 roles de Identity |
+| `GET` | `/api/traceability/history/{entityType}/{entityId}` | Cookie | Historial de cambios |
+| `GET` | `/api/users` | **ADMIN** | Listado paginado con rol |
+| `PUT` | `/api/users/{id}/role` | **ADMIN** | Cambio de rol |
+| `PUT` | `/api/users/{id}/status` | **ADMIN** | Activar / desactivar |
+| `DELETE` | `/api/users/{id}` | **ADMIN** | Baja lógica |
+| `POST` | `/api/setup/init-roles` | — | Crea los 4 roles |
+| `POST` | `/api/setup/seed-demo` | **ADMIN** | Puebla con datos demo |
 | `GET` | `/api/health` | — | Health check |
-| `WS` | `/hubs/notifications` | Cookie | Hub SignalR de notificaciones |
+| `WS` | `/hubs/notifications` | Cookie | Hub SignalR |
 
 ---
 
 ## 🧪 Verificación y scripts
 
-```bash
-# Backend: compilación de la solución completa (0 errores esperados)
-cd ChemLabBackend
-dotnet build ChemLabInventory.slnx
+    # Backend: compilación completa (0 errores esperados)
+    cd ChemLabBackend
+    dotnet build ChemLabInventory.slnx
 
-# Migraciones: todas deben aparecer aplicadas (sin "(Pending)")
-dotnet ef migrations list --project src/ChemLab.Infrastructure --startup-project src/ChemLab.API
+    # Migraciones: todas deben aparecer aplicadas (sin "(Pending)")
+    dotnet ef migrations list --project src/ChemLab.Infrastructure --startup-project src/ChemLab.API
 
-# Frontend: tipos y build de producción
-cd ../frontend
-pnpm exec tsc --noEmit
-pnpm run build
-```
+    # Frontend: tipos y build de producción
+    cd ../frontend
+    pnpm exec tsc --noEmit
+    pnpm run build
 
-Resultado del cierre de F8.3: `dotnet build` → **0 advertencias, 0 errores**;
-`tsc --noEmit` → **0 errores**; `pnpm run build` → **Compiled successfully**;
-`dotnet ef migrations list` → **6/6 migraciones aplicadas**.
+Cierre v1.1.1: `dotnet build` → **0 advertencias, 0 errores**; `tsc --noEmit` → **0 errores**; `pnpm run build` → **Compiled successfully**; `dotnet ef migrations list` → **6/6 migraciones aplicadas**.
 
 ---
 
-## 📋 Limitaciones conocidas
+## 📋 Limitaciones conocidas (free tier)
 
-- **SQLite** es la base de desarrollo (sin concurrencia multi-instancia ni persistencia
-  viable en free tiers); producción requerirá PostgreSQL.
-- Los roles se resuelven con **SQL crudo** porque `UserManager.GetRolesAsync()` devuelve
-  vacío con `IdentityRole<Guid>` + `GuidToStringConverter` en este modelo.
-- `LastLogin` no se persiste: la API devuelve `null` y la UI muestra "Nunca".
-- `AuditMiddleware` audita los 4 recursos de inventario/experimentación; `/api/users`
-  queda fuera de la auditoría automática en v1.0.0.
+- **Cold start**: Render duerme el backend tras 15 min de inactividad. El primer request tarda ~30 s.
+- **Data Protection keys**: se regeneran en cada deploy/spin-down. Los usuarios deben re-loguearse después de cada reinicio.
+- **SQLite** es la base de desarrollo; producción usa PostgreSQL (Supabase).
+- **Roles**: se resuelven con SQL crudo porque `UserManager.GetRolesAsync()` devuelve vacío con `IdentityRole<Guid>` + `GuidToStringConverter` en este modelo.
+- **`LastLogin`** no se persiste: la API devuelve `null` y la UI muestra "Nunca".
+- **`AuditMiddleware`** audita los 4 recursos de inventario/experimentación; `/api/users` queda fuera en v1.1.1.
 
 ## 🔮 Roadmap
 
-- Migración a PostgreSQL + despliegue (backend en Render/Railway, frontend en Vercel).
 - CI/CD con GitHub Actions (build + tests + tag automático).
 - Cobertura de pruebas en `ChemLab.Application.UnitTests` y `ChemLab.API.IntegrationTests`.
 - Auditoría de `/api/users` y persistencia de `LastLogin`.
+- Predicción de stock con ML.NET.
 
 ---
 
@@ -292,4 +321,3 @@ Distribuido bajo licencia MIT.
 Cristóbal Vera — [GitHub @criverap-duoc](https://github.com/criverap-duoc)
 
 Repositorio: [https://github.com/criverap-duoc/ChemLab](https://github.com/criverap-duoc/ChemLab)
-

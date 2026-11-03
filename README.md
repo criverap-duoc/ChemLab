@@ -1,6 +1,8 @@
 # 🧪 ChemLab — Gestión de inventario para laboratorios químicos
 
-[![Release](https://img.shields.io/badge/release-v1.0.0-2ea44f?logo=github)](https://github.com/criverap-duoc/ChemLab/releases/tag/v1.0.0)
+[![Backend](https://img.shields.io/badge/backend-live-success)](https://chemlab-vozz.onrender.com/api/health)
+[![Frontend](https://img.shields.io/badge/frontend-live-success)](https://chemlab-theta.vercel.app)
+[![Release](https://img.shields.io/badge/release-v1.1.0-blue)](https://github.com/criverap-duoc/ChemLab/releases)
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![EF Core](https://img.shields.io/badge/EF_Core-8.0-512BD4)](https://learn.microsoft.com/ef/core/)
 [![React](https://img.shields.io/badge/React-18.2-61DAFB?logo=react)](https://reactjs.org/)

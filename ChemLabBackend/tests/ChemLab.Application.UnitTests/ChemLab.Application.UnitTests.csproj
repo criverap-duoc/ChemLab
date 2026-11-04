@@ -20,4 +20,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- F10.1: los tests unitarios ejercitan DTOs y entidades de la capa Application/Domain. -->
+    <ProjectReference Include="..\..\src\ChemLab.Application\ChemLab.Application.csproj" />
+  </ItemGroup>
+
 </Project>

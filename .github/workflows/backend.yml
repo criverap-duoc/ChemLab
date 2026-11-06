@@ -1,0 +1,43 @@
+name: backend
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'ChemLabBackend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'ChemLabBackend/**'
+      - '.github/workflows/backend.yml'
+
+jobs:
+  build-and-test:
+    name: Build + tests (.NET 8)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          # 8.0.x: runtime/TFM real de la solución.
+          # 10.0.x: SDK que entiende el formato .slnx (soporte desde 9.0.200).
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Versiones
+        run: dotnet --version && dotnet --list-sdks
+
+      - name: Restore
+        run: dotnet restore ChemLabBackend/ChemLabInventory.slnx
+
+      - name: Build
+        run: dotnet build ChemLabBackend/ChemLabInventory.slnx --no-restore -c Release
+
+      - name: Test
+        run: dotnet test ChemLabBackend/ChemLabInventory.slnx --no-build -c Release --logger "console;verbosity=normal"

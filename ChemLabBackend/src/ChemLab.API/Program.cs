@@ -206,3 +206,8 @@ app.MapTraceabilityEndpoints();
 app.MapUserEndpoints();
 
 app.Run();
+
+// F10.1: las top-level statements generan una clase Program interna. Se declara parcial y
+// pública para que los tests de integración puedan usar WebApplicationFactory<Program>.
+public partial class Program { }
+

@@ -234,46 +234,49 @@ public static class ExperimentEndpoints
         experiment.EndDate = dto.EndDate ?? experiment.EndDate;
         experiment.UpdatedAt = DateTime.UtcNow;
 
-        // Actualizar reactivos (eliminar existentes y agregar nuevos)
+        // Actualizar reactivos (eliminar existentes y agregar nuevos).
+        // F10.2: las filas nuevas se registran con DbSet.AddRange para que EF las marque
+        // Added y emita INSERT. Si sólo se agregan a la navegación
+        // (experiment.Reagents.Add) y ya llevan Id asignado, ChangeTracker las trata como
+        // entidades existentes (Modified) y genera un UPDATE sobre una fila que no existe:
+        // 0 filas afectadas → DbUpdateConcurrencyException → 500 y no se guarda nada.
         if (dto.Reagents != null)
         {
             // Eliminar los reactivos existentes
             context.ExperimentReagents.RemoveRange(experiment.Reagents);
 
             // Agregar los nuevos
-            foreach (var reagent in dto.Reagents)
+            var newReagents = dto.Reagents.Select(reagent => new ExperimentReagent
             {
-                experiment.Reagents.Add(new ExperimentReagent
-                {
-                    Id = Guid.NewGuid(),
-                    ExperimentId = id,
-                    ReagentId = reagent.ReagentId,
-                    QuantityUsed = reagent.QuantityUsed,
-                    Unit = reagent.Unit,
-                    BatchNumber = reagent.BatchNumber
-                });
-            }
+                Id = Guid.NewGuid(),
+                ExperimentId = id,
+                ReagentId = reagent.ReagentId,
+                QuantityUsed = reagent.QuantityUsed,
+                Unit = reagent.Unit,
+                BatchNumber = reagent.BatchNumber
+            });
+
+            context.ExperimentReagents.AddRange(newReagents);
         }
 
-        // Actualizar equipos
+        // Actualizar equipos (misma corrección que en reactivos)
         if (dto.Equipment != null)
         {
             // Eliminar los equipos existentes
             context.ExperimentEquipment.RemoveRange(experiment.Equipment);
 
             // Agregar los nuevos
-            foreach (var eq in dto.Equipment)
+            var newEquipment = dto.Equipment.Select(eq => new ExperimentEquipment
             {
-                experiment.Equipment.Add(new ExperimentEquipment
-                {
-                    Id = Guid.NewGuid(),
-                    ExperimentId = id,
-                    EquipmentId = eq.EquipmentId,
-                    UsageHours = eq.UsageHours,
-                    CalibrationBefore = eq.CalibrationBefore,
-                    CalibrationAfter = eq.CalibrationAfter
-                });
-            }
+                Id = Guid.NewGuid(),
+                ExperimentId = id,
+                EquipmentId = eq.EquipmentId,
+                UsageHours = eq.UsageHours,
+                CalibrationBefore = eq.CalibrationBefore,
+                CalibrationAfter = eq.CalibrationAfter
+            });
+
+            context.ExperimentEquipment.AddRange(newEquipment);
         }
 
         await context.SaveChangesAsync();

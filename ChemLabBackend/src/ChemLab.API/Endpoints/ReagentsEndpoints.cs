@@ -20,6 +20,10 @@ public static class ReagentsEndpoints
             .WithName("GetAllReagents");
             // .WithOpenApi(); // Comentado temporalmente
 
+        // F10.3: búsqueda por QR. El segmento literal "by-qr" gana al parámetro {id:guid}.
+        group.MapGet("/by-qr/{code}", GetReagentByQrCode)
+            .WithName("GetReagentByQrCode");
+
         group.MapGet("/{id:guid}", GetReagentById)
             .WithName("GetReagentById");
             // .WithOpenApi();
@@ -97,6 +101,58 @@ public static class ReagentsEndpoints
         var reagent = await context.Reagents
             .Include(r => r.CreatedBy)
             .FirstOrDefaultAsync(r => r.Id == id && r.IsActive);
+
+        if (reagent is null)
+            return Results.NotFound(new { Message = "Reagent not found" });
+
+        var reagentDto = new ReagentDto
+        {
+            Id = reagent.Id,
+            Name = reagent.Name,
+            ChemicalFormula = reagent.ChemicalFormula,
+            CasNumber = reagent.CasNumber,
+            Quantity = reagent.Quantity,
+            Unit = reagent.Unit,
+            Location = reagent.Location,
+            HazardLevel = reagent.HazardLevel,
+            Supplier = reagent.Supplier,
+            ExpiryDate = reagent.ExpiryDate,
+            CreatedBy = $"{reagent.CreatedBy.FirstName} {reagent.CreatedBy.LastName}",
+            CreatedAt = reagent.CreatedAt
+        };
+
+        return Results.Ok(reagentDto);
+    }
+
+    /// <summary>
+    /// F10.3: resuelve un reactivo a partir del contenido de un QR.
+    /// Orden de búsqueda: Id (Guid) → CAS exacto → nombre parcial.
+    /// </summary>
+    private static async Task<IResult> GetReagentByQrCode(
+        string code,
+        ApplicationDbContext context)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+            return Results.NotFound(new { Message = "Reagent not found" });
+
+        var term = code.Trim();
+
+        Reagent? reagent = null;
+
+        if (Guid.TryParse(term, out var id))
+        {
+            reagent = await context.Reagents
+                .Include(r => r.CreatedBy)
+                .FirstOrDefaultAsync(r => r.Id == id && r.IsActive);
+        }
+
+        reagent ??= await context.Reagents
+            .Include(r => r.CreatedBy)
+            .FirstOrDefaultAsync(r => r.IsActive && r.CasNumber == term);
+
+        reagent ??= await context.Reagents
+            .Include(r => r.CreatedBy)
+            .FirstOrDefaultAsync(r => r.IsActive && r.Name.Contains(term));
 
         if (reagent is null)
             return Results.NotFound(new { Message = "Reagent not found" });

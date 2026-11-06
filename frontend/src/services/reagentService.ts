@@ -1,4 +1,5 @@
 import api from './api';
+import axios from 'axios';
 import { Reagent, CreateReagentDto } from '../types';
 
 export const reagentService = {
@@ -10,6 +11,21 @@ export const reagentService = {
   async getById(id: string): Promise<Reagent> {
     const response = await api.get<Reagent>(`/reagents/${id}`);
     return response.data;
+  },
+
+  // F10.3: búsqueda por QR. El backend resuelve por Id (Guid), CAS o nombre parcial.
+  // Un 404 se traduce a null para que la UI muestre "Reactivo no encontrado" sin
+  // tener que interpretar el error HTTP; el resto de errores se propagan.
+  async getByQr(code: string): Promise<Reagent | null> {
+    try {
+      const response = await api.get<Reagent>(`/reagents/by-qr/${encodeURIComponent(code)}`);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
   },
 
   async create(data: CreateReagentDto): Promise<{ id: string }> {

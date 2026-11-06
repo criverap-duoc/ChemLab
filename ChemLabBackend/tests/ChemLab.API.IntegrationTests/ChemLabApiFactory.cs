@@ -12,11 +12,9 @@ namespace ChemLab.API.IntegrationTests;
 /// <summary>
 /// F10.1: fábrica de la API real con una base SQLite aislada por ejecución.
 ///
-/// No se toca el código de producción: se reescribe la connection string vía
-/// configuración (Infrastructure la lee dentro del lambda diferido de AddDbContext,
-/// así que el valor ya está aplicado cuando se resuelve el primer DbContext) y se
-/// apunta a un archivo temporal absoluto, porque Infrastructure normaliza las rutas
-/// relativas contra el ContentRoot.
+/// No se toca el código de producción: en ConfigureServices se reemplaza el registro del
+/// DbContext por uno que apunta a un archivo temporal absoluto (Infrastructure normaliza
+/// las rutas relativas contra el ContentRoot) y así cada ejecución tiene su propia base.
 /// </summary>
 public sealed class ChemLabApiFactory : WebApplicationFactory<Program>
 {
@@ -40,6 +38,17 @@ public sealed class ChemLabApiFactory : WebApplicationFactory<Program>
             // NotificationBackgroundService lanza consultas periódicas contra la BD:
             // no aporta nada en tests y complica el ciclo de vida del host.
             services.RemoveAll<IHostedService>();
+
+            // F10.2: el override de configuración NO basta. AddInfrastructure lee la
+            // connection string de forma inmediata (antes de que el host de test aplique
+            // sus fuentes de configuración), así que el DbContext se registra con la ruta
+            // de appsettings.Development.json y los tests escribirían en la BD de
+            // desarrollo (src/ChemLab.API/chemlab.db). Se re-registra apuntando al archivo
+            // temporal para que cada ejecución tenga su propia base aislada.
+            services.RemoveAll<ApplicationDbContext>();
+            services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlite($"Data Source={_databasePath}"));
         });
     }
 

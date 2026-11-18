@@ -204,6 +204,8 @@ app.MapDebugEndpoints();
 app.MapNotificationEndpoints();
 app.MapTraceabilityEndpoints();
 app.MapUserEndpoints();
+// F11.1: API pública de solo lectura para QuimioResponde (API key, sin cookie ni JWT).
+app.MapPublicInventoryEndpoints();
 
 app.Run();
 

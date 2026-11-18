@@ -35,10 +35,14 @@ import {
   Search as SearchIcon,
   Warning as WarningIcon,
   History as HistoryIcon,
+  QrCode2 as QrCode2Icon,
+  QrCodeScanner as QrCodeScannerIcon,
 } from '@mui/icons-material';
 import { reagentService } from '../../services/reagentService';
 import { Reagent, CreateReagentDto, normalizeHazardLevel } from '../../types';
 import { EntityHistory } from '../traceability/EntityHistory';
+import { QRCodeDialog, QRCodeReagent } from './QRCodeDialog';
+import { QRScanner } from './QRScanner';
 import { pubchemService, PubChemData } from '../../services/pubchemService';
 
 const hazardLevels = [
@@ -77,6 +81,11 @@ export const ReagentList: React.FC = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [enrichedData, setEnrichedData] = useState<PubChemData | null>(null);
+  // F10.3: generación y escaneo de QR.
+  const [qrReagent, setQrReagent] = useState<QRCodeReagent | null>(null);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scanAlert, setScanAlert] = useState<{ severity: 'success' | 'error'; message: string } | null>(null);
 
   const loadReagents = useCallback(async () => {
     const data = await reagentService.getAll();
@@ -188,6 +197,46 @@ export const ReagentList: React.FC = () => {
   setHistoryOpen(true);
   };
 
+  // F10.3: el QR codifica el Id del reactivo; aquí solo se prepara el diálogo.
+  const handleOpenQrDialog = (reagent: Reagent) => {
+    setQrReagent({
+      id: reagent.id,
+      name: reagent.name,
+      chemicalFormula: reagent.chemicalFormula,
+    });
+    setQrDialogOpen(true);
+  };
+
+  // F10.3: resultado del escaneo. El service devuelve null cuando el backend
+  // responde 404 (código inexistente).
+  const handleQrScan = async (code: string) => {
+    setScannerOpen(false);
+
+    try {
+      const found = await reagentService.getByQr(code);
+
+      if (!found) {
+        setScanAlert({ severity: 'error', message: 'Reactivo no encontrado' });
+        return;
+      }
+
+      const reagent: Reagent = {
+        ...found,
+        hazardLevel: normalizeHazardLevel(found.hazardLevel),
+        minQuantity: found.minQuantity ?? 10,
+      };
+
+      // Deja visible la tarjeta del reactivo escaneado y abre su ficha completa.
+      setSearchTerm(reagent.name);
+      setPage(1);
+      setScanAlert({ severity: 'success', message: `Reactivo encontrado: ${reagent.name}` });
+      handleOpenDialog(reagent);
+    } catch (error) {
+      console.error('Error searching reagent by QR:', error);
+      setScanAlert({ severity: 'error', message: 'No se pudo buscar el reactivo escaneado' });
+    }
+  };
+
 
   const getHazardInfo = (level: number) => {
     return hazardLevels[level] || hazardLevels[0];
@@ -274,7 +323,7 @@ export const ReagentList: React.FC = () => {
       {/* Barra de filtros */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={4}>
             <TextField
               fullWidth
               placeholder="Buscar por nombre, fórmula o ubicación..."
@@ -290,7 +339,7 @@ export const ReagentList: React.FC = () => {
               size="small"
             />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={3}>
             <FormControl fullWidth size="small">
               <InputLabel>Filtrar por peligro</InputLabel>
               <Select
@@ -317,18 +366,38 @@ export const ReagentList: React.FC = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={2}>
-            <Button
-              fullWidth
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => handleOpenDialog()}
-            >
-              Nuevo Reactivo
-            </Button>
+          <Grid item xs={12} md={5}>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              <Button
+                startIcon={<AddIcon />}
+                variant="contained"
+                onClick={() => handleOpenDialog()}
+                sx={{ flex: '1 1 160px' }}
+              >
+                Nuevo Reactivo
+              </Button>
+              <Button
+                startIcon={<QrCodeScannerIcon />}
+                variant="outlined"
+                onClick={() => {
+                  setScanAlert(null);
+                  setScannerOpen(true);
+                }}
+                sx={{ flex: '1 1 150px' }}
+              >
+                Escanear QR
+              </Button>
+            </Box>
           </Grid>
         </Grid>
       </Paper>
+
+      {/* F10.3: resultado del último escaneo QR */}
+      {scanAlert && (
+        <Alert severity={scanAlert.severity} onClose={() => setScanAlert(null)} sx={{ mb: 2 }}>
+          {scanAlert.message}
+        </Alert>
+      )}
 
       {/* Grid de reactivos */}
       <Grid container spacing={3}>
@@ -421,6 +490,11 @@ export const ReagentList: React.FC = () => {
                   </Typography>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end' }}>
+                  <Tooltip title="Ver QR">
+                    <IconButton onClick={() => handleOpenQrDialog(reagent)} color="secondary">
+                      <QrCode2Icon />
+                    </IconButton>
+                  </Tooltip>
                   <Tooltip title="Editar">
                     <IconButton onClick={() => handleOpenDialog(reagent)} color="primary">
                       <EditIcon />
@@ -709,6 +783,17 @@ export const ReagentList: React.FC = () => {
           </Button>
         </DialogContent>
       </Dialog>
+      {/* F10.3: diálogos de QR */}
+      <QRCodeDialog
+        open={qrDialogOpen}
+        onClose={() => setQrDialogOpen(false)}
+        reagent={qrReagent}
+      />
+      <QRScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={handleQrScan}
+      />
       <EntityHistory
         entityType="reagent"
         entityId={selectedForHistory?.id || ''}

@@ -254,6 +254,51 @@ La aplicación queda en `http://localhost:3000`. El proyecto usa **solo pnpm**: 
 | `GET` | `/api/health` | — | Health check |
 | `WS` | `/hubs/notifications` | Cookie | Hub SignalR |
 
+### API pública de solo lectura
+
+Integración con **QuimioResponde** (F11.1). Se autentica con el header `X-Api-Key` (sin cookie, sin JWT, sin rol) y es estrictamente de **solo lectura**: solo `GET`, solo reactivos activos y sin ningún dato de usuario ni de auditoría (`createdBy`, `createdAt`, `updatedAt`, `isActive` no se exponen).
+
+**Configuración de la clave**
+
+- Desarrollo: `src/ChemLab.API/appsettings.Development.json` → `PublicApi:ApiKey = "dev-key-cambiar-en-produccion"`.
+- Producción: variable de entorno `PublicApi__ApiKey` (Render). Si está vacía, el endpoint responde `503` y no sirve datos.
+
+**Ejemplo**
+
+    curl -H "X-Api-Key: dev-key-cambiar-en-produccion" \
+         "http://localhost:5000/api/public/inventory?expiringInDays=30&pageSize=10"
+
+**Filtros (query string)**
+
+| Parámetro | Tipo | Descripción |
+| --- | --- | --- |
+| `expiringInDays` | int | Reactivos con vencimiento dentro de N días (`> 0`) |
+| `expired` | bool | `true` → solo reactivos ya vencidos |
+| `hazardLevel` | int | Nivel de peligro exacto: `0`=None, `1`=Low, `2`=Moderate, `3`=High, `4`=Extreme |
+| `location` | string | Coincidencia parcial en la ubicación (sin distinguir mayúsculas) |
+| `casNumber` | string | Coincidencia exacta del CAS |
+| `page` | int | Página (mínimo 1, por defecto 1) |
+| `pageSize` | int | Tamaño de página (1–100, por defecto 20) |
+
+**Campos de la respuesta** (`{ data, page, pageSize, totalCount, totalPages }`)
+
+| Campo | Tipo | Descripción |
+| --- | --- | --- |
+| `id` | guid | Identificador del reactivo |
+| `name` | string | Nombre |
+| `casNumber` | string? | Número CAS |
+| `chemicalFormula` | string? | Fórmula química |
+| `quantity` | decimal | Stock actual |
+| `unit` | string | Unidad |
+| `location` | string | Ubicación física |
+| `hazardLevel` | int | Nivel de peligro (`0`–`4`) |
+| `expiryDate` | datetime? | Fecha de vencimiento (UTC) |
+| `daysUntilExpiry` | int? | Días hasta el vencimiento; `null` si no hay fecha (negativo = vencido) |
+| `isExpired` | bool | `true` si ya venció |
+| `isLowStock` | bool | `true` si `quantity <= minQuantity` |
+
+Orden por defecto: primero lo que vence antes (sin fecha al final) y, a igualdad, por nombre.
+
 ---
 
 ## 🧪 Verificación y scripts

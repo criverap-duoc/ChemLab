@@ -177,6 +177,45 @@ public sealed class PublicInventoryTests : IClassFixture<ChemLabApiFactory>, IDi
         Assert.Equal("7732-18-5", root.GetProperty("data")[0].GetProperty("casNumber").GetString());
     }
 
+    /// <summary>
+    /// Regresión F11.1b: combinación de filtros usada por QuimioResponde en producción
+    /// (expiringInDays + hazardLevel + location) debe devolver el reactivo correcto y
+    /// llegar al SQL con `ORDER BY` portable (sin `COALESCE(..., DateTime.MaxValue)`).
+    /// </summary>
+    [Fact]
+    public async Task CombinedFilters_ExpiringHazardAndLocation_ReturnsMatch()
+    {
+        // Act: ventana de 30 días + nivel 3 (High) + ubicación parcial en minúsculas.
+        using var doc = await GetInventoryAsync("?expiringInDays=30&hazardLevel=3&location=estante&pageSize=100");
+        var root = doc.RootElement;
+
+        // Assert: solo el reactivo High dentro de la ventana y en la ubicación indicada.
+        Assert.Equal(new[] { ExpiringId }, Ids(root));
+        Assert.Equal(1, root.GetProperty("totalCount").GetInt32());
+        Assert.Equal(ExpiringName, root.GetProperty("data")[0].GetProperty("name").GetString());
+    }
+
+    /// <summary>
+    /// Regresión F11.1b: el reactivo sin fecha de vencimiento se ordena al final y el orden
+    /// por vencimiento ascendente se mantiene tras sustituir `DateTime.MaxValue` por un
+    /// predicado booleano (portable entre SQLite y PostgreSQL).
+    /// </summary>
+    [Fact]
+    public async Task DefaultOrder_PlacesReagentsWithoutExpiryLast()
+    {
+        // Act
+        using var doc = await GetInventoryAsync("?pageSize=100");
+        var root = doc.RootElement;
+        var ids = Ids(root);
+
+        // Assert: primero el vencido, después los próximos a vencer y al final el sin fecha.
+        Assert.Equal(4, ids.Count);
+        Assert.Equal(ExpiredId, ids[0]);
+        Assert.Equal(TodayId, ids[1]);
+        Assert.Equal(ExpiringId, ids[2]);
+        Assert.Equal(NoExpiryId, ids[3]);
+    }
+
     [Fact]
     public async Task DaysUntilExpiry_IsPositiveZeroAndNegative()
     {

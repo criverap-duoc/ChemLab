@@ -297,6 +297,8 @@ Integración con **QuimioResponde** (F11.1). Se autentica con el header `X-Api-K
 
 Orden por defecto: primero lo que vence antes (sin fecha al final) y, a igualdad, por nombre.
 
+**Errores**: si la base de datos no responde (Postgres/Supabase caído, cadena de conexión inválida o esquema desalineado), el endpoint responde `503` con un `ProblemDetails` genérico y registra la excepción real en los logs del servidor; nunca se devuelve detalle interno al cliente.
+
 ---
 
 ## 🧪 Verificación y scripts

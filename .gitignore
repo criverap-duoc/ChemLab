@@ -40,3 +40,5 @@ frontend/ERROR
 frontend/TS[0-9]*
 
 # Nota: 'theme-mode' NO se ignora porque no es un archivo: vive en localStorage del navegador.
+
+PLANNER_CONTEXT.md

@@ -37,6 +37,7 @@ public static class PublicInventoryEndpoints
     private static async Task<IResult> GetInventory(
         HttpContext httpContext,
         ApplicationDbContext context,
+        ILoggerFactory loggerFactory,
         [FromQuery] int? expiringInDays = null,
         [FromQuery] bool? expired = null,
         [FromQuery] int? hazardLevel = null,
@@ -45,6 +46,8 @@ public static class PublicInventoryEndpoints
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
+        var logger = loggerFactory.CreateLogger(typeof(PublicInventoryEndpoints).FullName!);
+
         // Clamp de paginación: page >= 1 y 1 <= pageSize <= 100.
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 1;
@@ -87,45 +90,86 @@ public static class PublicInventoryEndpoints
             query = query.Where(r => r.CasNumber == cas);
         }
 
-        var totalCount = await query.CountAsync(cancellationToken);
-
-        // Se materializa la página de entidades y los campos calculados se resuelven en C#
-        // (DaysUntilExpiry/IsExpired/IsLowStock) para no depender de traducciones SQL
-        // distintas entre SQLite y PostgreSQL.
-        var reagents = await query
-            .OrderBy(r => r.ExpiryDate ?? DateTime.MaxValue)
-            .ThenBy(r => r.Name)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(cancellationToken);
-
-        var data = reagents
-            .Select(r => new PublicReagentDto
-            {
-                Id = r.Id,
-                Name = r.Name,
-                CasNumber = r.CasNumber,
-                ChemicalFormula = r.ChemicalFormula,
-                Quantity = r.Quantity,
-                Unit = r.Unit,
-                Location = r.Location,
-                HazardLevel = (int)r.HazardLevel,
-                ExpiryDate = r.ExpiryDate,
-                DaysUntilExpiry = r.ExpiryDate.HasValue
-                    ? (int?)(r.ExpiryDate.Value - now).Days
-                    : null,
-                IsExpired = r.ExpiryDate.HasValue && r.ExpiryDate.Value < now,
-                IsLowStock = r.Quantity <= r.MinQuantity
-            })
-            .ToList();
-
-        return Results.Ok(new
+        // F11.1b: la consulta se aísla en un try/catch para que un fallo de base de datos
+        // (PostgreSQL/Supabase caído, cadena de conexión inválida, esquema desalineado) se
+        // registre con su excepción real en los logs y no se traduzca en un 500 opaco.
+        try
         {
-            Data = data,
-            Page = page,
-            PageSize = pageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
-        });
+            var totalCount = await query.CountAsync(cancellationToken);
+
+            // Se materializa la página de entidades y los campos calculados se resuelven en C#
+            // (DaysUntilExpiry/IsExpired/IsLowStock) para no depender de traducciones SQL
+            // distintas entre SQLite y PostgreSQL.
+            //
+            // F11.1b: el orden "sin fecha al final" se expresa con un predicado booleano en
+            // lugar de `r.ExpiryDate ?? DateTime.MaxValue`. EF traduce DateTime.MaxValue a
+            // `TIMESTAMPTZ 'infinity'`, un literal específico de PostgreSQL que rompe la
+            // consulta si la columna no es `timestamp with time zone` (esquema creado con
+            // otro tipo o con otra versión del proveedor). `ORDER BY (ExpiryDate IS NULL),`
+            // es portable y semánticamente idéntico.
+            var reagents = await query
+                .OrderBy(r => r.ExpiryDate == null)
+                .ThenBy(r => r.ExpiryDate)
+                .ThenBy(r => r.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            var data = reagents
+                .Select(r => new PublicReagentDto
+                {
+                    Id = r.Id,
+                    Name = r.Name,
+                    CasNumber = r.CasNumber,
+                    ChemicalFormula = r.ChemicalFormula,
+                    Quantity = r.Quantity,
+                    Unit = r.Unit,
+                    Location = r.Location,
+                    HazardLevel = (int)r.HazardLevel,
+                    ExpiryDate = r.ExpiryDate,
+                    DaysUntilExpiry = r.ExpiryDate.HasValue
+                        ? (int?)(r.ExpiryDate.Value - now).Days
+                        : null,
+                    IsExpired = r.ExpiryDate.HasValue && r.ExpiryDate.Value < now,
+                    IsLowStock = r.Quantity <= r.MinQuantity
+                })
+                .ToList();
+
+            return Results.Ok(new
+            {
+                Data = data,
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            });
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // El cliente cerró la conexión antes de terminar: no es un fallo del servidor.
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "F11.1: fallo al consultar el inventario público " +
+                "(expiringInDays={ExpiringInDays}, expired={Expired}, hazardLevel={HazardLevel}, " +
+                "hasLocation={HasLocation}, hasCasNumber={HasCasNumber}, page={Page}, pageSize={PageSize})",
+                expiringInDays,
+                expired,
+                hazardLevel,
+                !string.IsNullOrWhiteSpace(location),
+                !string.IsNullOrWhiteSpace(casNumber),
+                page,
+                pageSize);
+
+            // Mensaje genérico: no se filtra el detalle interno (host, SQL ni excepción).
+            return Results.Problem(
+                title: "No se pudo consultar el inventario público.",
+                detail: "Error interno al acceder al inventario. Intente nuevamente más tarde.",
+                statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
     }
 }
+

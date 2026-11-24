@@ -299,6 +299,45 @@ Orden por defecto: primero lo que vence antes (sin fecha al final) y, a igualdad
 
 **Errores**: si la base de datos no responde (Postgres/Supabase caído, cadena de conexión inválida o esquema desalineado), el endpoint responde `503` con un `ProblemDetails` genérico y registra la excepción real en los logs del servidor; nunca se devuelve detalle interno al cliente.
 
+### Integración con QuimioResponde
+
+[QuimioResponde](https://github.com/criverap-duoc/QuimioResponde) es un asistente técnico referencial de seguridad química para Chile que consume esta API en **solo lectura** para responder preguntas como *"¿qué reactivos de mi inventario están vencidos o próximos a vencer y qué peligros tienen?"*. La integración está cerrada (F11.1) y verificada E2E en producción.
+
+**Endpoint consumido**: `GET /api/public/inventory` con header `X-Api-Key`.
+
+**Flujo**:
+
+    QuimioResponde (backend) ──curl──▶ ChemLab API ──EF Core──▶ PostgreSQL (Supabase)
+            ▲                              │
+            └────── JSON (solo lectura) ───┘
+
+**Disponibilidad**: Render free tier duerme tras 15 min sin tráfico (el primer request tarda ~30 s). El workflow `.github/workflows/supabase-keepalive.yml` hace ping a este endpoint cada 3 días para evitar que Supabase (free tier) se pause por inactividad.
+
+**Seguridad**: la API key vive solo en el backend de QuimioResponde (`CHEMLAB_API_KEY`) y en Render (`PublicApi__ApiKey`). Nunca en el frontend de QuimioResponde ni en el repo.
+
+#### Smoke tests de integración
+
+Suite de [Playwright](https://playwright.dev/) que verifica que la integración sigue viva, ejecutable localmente y en CI cada 3 días.
+
+**Ubicación**: `frontend/e2e/smoke/quimioresponde.spec.ts`
+
+| Test | Verifica |
+| --- | --- |
+| `health-check` | `GET /api/health` → `200` |
+| `public-inventory-auth` | Sin `X-Api-Key` → `401` |
+| `public-inventory-ok` | Con key válida → `200` + `data` es array |
+| `public-inventory-filter` | `?expiringInDays=30` → `200` + `page === 1` |
+| `public-inventory-hazard` | `?hazardLevel=3` → `200` + todos con `hazardLevel === 3` |
+
+**Ejecución local**:
+
+    cd frontend
+    CHEMLAB_PUBLIC_API_KEY=<key> pnpm test:smoke
+
+**Ejecución en CI**: job `smoke-quimioresponde` en `.github/workflows/frontend.yml`, programado con `cron: '0 6 */3 * *'` (cada 3 días, junto al keepalive). Usa el secret `CHEMLAB_PUBLIC_API_KEY` ya configurado en GitHub.
+
+**Timeout**: 45 s por test (tolera el cold start de Render free tier).
+
 ---
 
 ## 🧪 Verificación y scripts

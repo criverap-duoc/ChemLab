@@ -22,6 +22,13 @@ builder.Services.AddProblemDetails();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// F11.2: readiness probe. /api/health sigue siendo liveness (siempre 200); este
+// health check verifica de verdad que ApplicationDbContext puede abrir la conexión
+// (AddDbContextCheck ejecuta Database.CanConnectAsync contra el provider configurado).
+// Así, si Supabase/pg se pausa, /api/health/ready responde 503 Unhealthy.
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<ApplicationDbContext>("database");
+
 // Identity - CONFIGURACIÓN PARA API (SIN REDIRECCIONES)
 builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
 {
@@ -173,6 +180,10 @@ app.MapGet("/api/health", () => Results.Ok(new
     version = "1.0.0"
 }))
 .WithName("HealthCheck");
+
+// F11.2: readiness probe real (incluye verificación de BD).
+// 200 Healthy si la BD responde; 503 Unhealthy si no. No se toca /api/health (liveness).
+app.MapHealthChecks("/api/health/ready");
 
 app.MapGet("/debug/hubs", () =>
 {

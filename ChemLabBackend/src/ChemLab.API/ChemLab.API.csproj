@@ -20,6 +20,9 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.6" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
+    <!-- F11.2: AddDbContextCheck<T>() para el readiness probe (/api/health/ready).
+         Versión alineada con EF Core 8.0.11 (el que resuelve Npgsql 8.0.11). -->
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.11" />
   </ItemGroup>
 
 </Project>

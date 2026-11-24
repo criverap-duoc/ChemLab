@@ -11,6 +11,11 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend.yml'
+  schedule:
+    # F11.3: smoke tests de QuimioResponde cada 3 días a las 06:00 UTC,
+    # junto al keepalive de Supabase.
+    - cron: '0 6 */3 * *'
+  workflow_dispatch: # Permite lanzar build + smoke tests a mano
 
 jobs:
   build-and-test:
@@ -51,3 +56,49 @@ jobs:
       - name: Test
         # pnpm reenvía los flags al script; el "--" extra lo toma jest como patrón.
         run: pnpm test --watchAll=false
+
+  smoke-quimioresponde:
+    name: Smoke QuimioResponde (API pública)
+    # F11.3: solo programado (cada 3 días) o manual; no se ejecuta en cada push/PR.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      CI: true
+      # API real (Render free tier: el cold start puede llegar a ~30 s).
+      CHEMLAB_API_URL: https://chemlab-vozz.onrender.com
+      CHEMLAB_PUBLIC_API_KEY: ${{ secrets.CHEMLAB_PUBLIC_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify secret
+        # Sin la key, los tests autenticados se omitirían: mejor fallar explícito.
+        run: |
+          if [ -z "$CHEMLAB_PUBLIC_API_KEY" ]; then
+            echo "::error::Falta el secret CHEMLAB_PUBLIC_API_KEY (Settings -> Secrets -> Actions)."
+            exit 1
+          fi
+
+      - name: Smoke tests
+        # La suite usa el fixture `request`: no requiere instalar navegadores.
+        run: pnpm test:smoke
+
